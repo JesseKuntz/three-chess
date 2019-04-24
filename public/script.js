@@ -2,16 +2,21 @@
 // BASIC SETUP
 // ------------------------------------------------
 
-var camera, scene, renderer, controls, loader;
+var camera, scene, renderer, controls, loader, light;
 
 init();
 animate();
 
 function init() {
-	loader = new THREE.OBJLoader();
+	loader = new THREE.GLTFLoader();
 
 	// Create an empty scene
 	scene = new THREE.Scene();
+
+	// Create a light
+	light = new THREE.PointLight( 0xff0000, 3, 100 );
+	light.position.set(0, -10, 5 );
+	scene.add(light);
 
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
@@ -44,24 +49,7 @@ function init() {
 	// FUN STARTS HERE
 	// ------------------------------------------------
 
-	// load a the king -- doesn't work yet
-	// loader.load(
-	// 	// resource URL
-	// 	'models/king.obj',
-	// 	// called when resource is loaded
-	// 	function ( object ) {
-	// 		scene.add( object );
-	// 	},
-	// 	// called when loading is in progresses
-	// 	function ( xhr ) {
-	// 		console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-	// 	},
-	// 	// called when loading has errors
-	// 	function ( error ) {
-	// 		console.log( 'An error happened' );
-	// 	}
-	// );
-
+	// Load the board
 	var geometry = new THREE.BoxGeometry(1, 1, 1);
 
 	let y = 3.5;
@@ -84,6 +72,21 @@ function init() {
 		if (color === "#ffffff") color = "#000000";
 		else color = "#ffffff";
 		y--;
+	}
+
+	// Load the pieces
+	load('models/rook.gltf', -3.5, -3.5);
+	load('models/knight.gltf', -2.5, -3.5);
+	load('models/bishop.gltf', -1.5, -3.5);
+	load('models/queen.gltf', -.5, -3.5);
+	load('models/king.gltf', .5, -3.5);
+	load('models/bishop.gltf', 1.5, -3.5);
+	load('models/knight.gltf', 2.5, -3.5);
+	load('models/rook.gltf', 3.5, -3.5);
+	let start = -3.5
+	while (start <= 3.5) {
+		load('models/pawn.gltf', start, -2.5);
+		start++;
 	}
 }
 
@@ -113,4 +116,13 @@ function onWindowResize() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	controls.handleResize();
 	render();
+}
+
+function load(url, x, y) {
+	loader.load(url, function (gltf) {
+		scene.add(gltf.scene);
+		gltf.scene.children[0].scale.set(.05, .05, .05);
+		gltf.scene.children[0].rotation.x = Math.PI / 2;
+		gltf.scene.children[0].position.set(x, y, .5);
+});
 }
