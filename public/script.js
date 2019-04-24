@@ -89,7 +89,7 @@ function init() {
 	// Need to figure out how to only do this AFTER every piece is loaded in.
 	// I tried promises and callbacks, and neither worked... may try jQuery deferreds next.
 	console.log(chessPieces);
-	chessPieces[1].rotation.y = Math.PI / 2;
+	// chessPieces[1].rotation.y = Math.PI / 2;
 }
 
 function animate() {
