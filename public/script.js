@@ -4,6 +4,9 @@
 
 var camera, scene, renderer, controls, loader, light;
 
+boardTiles = [];
+chessPieces = [];
+
 init();
 animate();
 
@@ -67,6 +70,8 @@ function init() {
 
 			if (color === "#ffffff") color = "#000000";
 			else color = "#ffffff";
+
+			boardTiles.push(cube);
 		}
 
 		if (color === "#ffffff") color = "#000000";
@@ -74,20 +79,17 @@ function init() {
 		y--;
 	}
 
+	// Example of accessing an individual tile
+	console.log(boardTiles);
+	boardTiles[20].material.color.set("#ff0000");
+
 	// Load the pieces
-	load('models/rook.gltf', -3.5, -3.5);
-	load('models/knight.gltf', -2.5, -3.5);
-	load('models/bishop.gltf', -1.5, -3.5);
-	load('models/queen.gltf', -.5, -3.5);
-	load('models/king.gltf', .5, -3.5);
-	load('models/bishop.gltf', 1.5, -3.5);
-	load('models/knight.gltf', 2.5, -3.5);
-	load('models/rook.gltf', 3.5, -3.5);
-	let start = -3.5
-	while (start <= 3.5) {
-		load('models/pawn.gltf', start, -2.5);
-		start++;
-	}
+	loadPieces();
+
+	// Need to figure out how to only do this AFTER every piece is loaded in.
+	// I tried promises and callbacks, and neither worked... may try jQuery deferreds next.
+	console.log(chessPieces);
+	// chessPieces[1].rotation.y = Math.PI / 2;
 }
 
 function animate() {
@@ -124,5 +126,23 @@ function load(url, x, y) {
 		gltf.scene.children[0].scale.set(.05, .05, .05);
 		gltf.scene.children[0].rotation.x = Math.PI / 2;
 		gltf.scene.children[0].position.set(x, y, .5);
-});
+
+		chessPieces.push(gltf.scene.children[0]);
+	});
+}
+
+function loadPieces() {
+	load('models/rook.gltf', -3.5, -3.5);
+	load('models/knight.gltf', -2.5, -3.5);
+	load('models/bishop.gltf', -1.5, -3.5);
+	load('models/queen.gltf', -.5, -3.5);
+	load('models/king.gltf', .5, -3.5);
+	load('models/bishop.gltf', 1.5, -3.5);
+	load('models/knight.gltf', 2.5, -3.5);
+	load('models/rook.gltf', 3.5, -3.5);
+	let start = -3.5
+	while (start <= 3.5) {
+		load('models/pawn.gltf', start, -2.5);
+		start++;
+	}
 }
