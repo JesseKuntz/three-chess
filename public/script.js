@@ -75,14 +75,22 @@ function animate() {
 
 	// If the mouse is touching a piece
 	if ( intersects.length > 0 ) {
+		// If the piece is a NEW piece
 		if ( INTERSECTED != intersects[ 0 ].object ) {
 			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 			INTERSECTED = intersects[ 0 ].object;
 			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
 			INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+			highlightPossibleMoves();
 		}
-	} else {
-		if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+	}
+	// If the mouse is NOT touching a piece
+	else {
+		if ( INTERSECTED ) {
+			INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+			resetBoardColors();
+		}
 		INTERSECTED = null;
 	}
 
@@ -196,6 +204,18 @@ function loadBoard() {
 	}
 }
 
+function highlightPossibleMoves() {
+	let id = INTERSECTED.uuid;
+	let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+
+	let moves = currPiece.possibleMoves;
+	for(let i = 0; i < currPiece.possibleMoves.length; i++) {
+		let x = moves[i][0];
+		let y = moves[i][1];
+		boardTiles[x][y].material.color.set("#00ff00")
+	}
+}
+
 function resetBoardColors() {
 	let color = "#000000"
 	for (let c = 0; c < boardTiles.length; c++) {
@@ -219,11 +239,11 @@ function onMouseMove(event) {
 	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
 
+// For now, not actually necessary. But we will change things up soon.
 function onMouseDown(event) {
 	if (INTERSECTED !== null) {
 		let id = INTERSECTED.uuid;
 		let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
-		// console.log(currPiece);
 
 		let moves = currPiece.possibleMoves;
 		for(let i = 0; i < currPiece.possibleMoves.length; i++) {
