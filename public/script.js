@@ -200,6 +200,12 @@ function onMouseMove(event) {
 }
 
 function onMouseDown(event) {
-	console.log("Current selected: ")
-	console.log(INTERSECTED);
+	// console.log("All units: ")
+	// console.log(chessPieces);
+	if (INTERSECTED !== null) {
+		let id = INTERSECTED.uuid;
+		let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+		console.log(currPiece);
+	}
+
 }
