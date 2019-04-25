@@ -188,6 +188,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		};
 
+
 	}() );
 
 

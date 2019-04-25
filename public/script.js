@@ -4,11 +4,9 @@
 
 var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSECTED;
 
-var normMaterial = new THREE.MeshNormalMaterial();
-
-boardTiles = [];
-chessPieces = [];
-justMeshes = [];
+var boardTiles = [];
+var chessPieces = [];
+var justMeshes = [];
 
 init();
 animate();
@@ -59,31 +57,7 @@ function init() {
 	// ------------------------------------------------
 
 	// Load the board
-	var geometry = new THREE.BoxGeometry(1, 1, 1);
-
-	let y = 3.5;
-	let color = "#ffffff"
-	for (let r = 0; r < 8; r++) {
-		let x = -3.5;
-
-		for (let c = 0; c < 8; c++) {
-			let material = new THREE.MeshBasicMaterial({color: color});
-			let cube = new THREE.Mesh(geometry, material);
-			scene.add(cube);
-
-			cube.position.set(x, y, 0)
-			x++;
-
-			if (color === "#ffffff") color = "#000000";
-			else color = "#ffffff";
-
-			boardTiles.push(cube);
-		}
-
-		if (color === "#ffffff") color = "#000000";
-		else color = "#ffffff";
-		y--;
-	}
+	loadBoard();
 
 	// Load the pieces
 	loadPieces();
@@ -97,9 +71,9 @@ function animate() {
 	raycaster.setFromCamera( mouse, camera );
 
 	// calculate objects intersecting the picking ray
-	// var intersects = raycaster.intersectObjects( scene.children );
 	var intersects = raycaster.intersectObjects(justMeshes);
 
+	// If the mouse is touching a piece
 	if ( intersects.length > 0 ) {
 		if ( INTERSECTED != intersects[ 0 ].object ) {
 			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
@@ -191,6 +165,52 @@ function loadPieces() {
 	}
 }
 
+function loadBoard() {
+	var geometry = new THREE.BoxGeometry(1, 1, 1);
+
+	let x = -3.5;
+	let color = "#000000"
+	for (let c = 0; c < 8; c++) {
+		let y = -3.5;
+		let col = [];
+
+		for (let r = 0; r < 8; r++) {
+			let material = new THREE.MeshBasicMaterial({color: color});
+			let cube = new THREE.Mesh(geometry, material);
+			scene.add(cube);
+
+			cube.position.set(x, y, 0)
+			y++;
+
+			if (color === "#ffffff") color = "#000000";
+			else color = "#ffffff";
+
+			col.push(cube);
+		}
+
+		if (color === "#ffffff") color = "#000000";
+		else color = "#ffffff";
+		x++;
+
+		boardTiles.push(col);
+	}
+}
+
+function resetBoardColors() {
+	let color = "#000000"
+	for (let c = 0; c < boardTiles.length; c++) {
+		for (let r = 0; r < boardTiles[0].length; r++) {
+			boardTiles[c][r].material.color.set(color);
+
+			if (color === "#ffffff") color = "#000000";
+			else color = "#ffffff";
+		}
+
+		if (color === "#ffffff") color = "#000000";
+		else color = "#ffffff";
+	}
+}
+
 function onMouseMove(event) {
 	// calculate mouse position in normalized device coordinates
 	// (-1 to +1) for both components
@@ -200,12 +220,16 @@ function onMouseMove(event) {
 }
 
 function onMouseDown(event) {
-	// console.log("All units: ")
-	// console.log(chessPieces);
 	if (INTERSECTED !== null) {
 		let id = INTERSECTED.uuid;
 		let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
-		console.log(currPiece);
-	}
+		// console.log(currPiece);
 
+		let moves = currPiece.possibleMoves;
+		for(let i = 0; i < currPiece.possibleMoves.length; i++) {
+			let x = moves[i][0];
+			let y = moves[i][1];
+			boardTiles[x][y].material.color.set("#00ff00")
+		}
+	}
 }
