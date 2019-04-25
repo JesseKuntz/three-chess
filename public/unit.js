@@ -3,7 +3,8 @@
 const colors = {
     WHITE: 'white',
     BLACK: 'black',
-    NULL: 'null'
+    INVALID: 'invald',
+    EMPTY: 'empty'
 }
 
 // Parent unit class
@@ -17,57 +18,70 @@ class Unit {
             throw "Unit is not positioned on the board."
         }
         // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
+        if(color == colors.BLACK || color == colors.WHITE) {
             this.color = color;
         } else {
             throw "Color for unit is not black/white."
         }
+        this.possibleMoves = [];
+        this.mesh;
     }
 
     getPosition() { return this.position; }
-    getPossibleMoves() { return this.position; }
+    getPossibleMoves() { return []; }
+
+    makeMove(position_x, position_y) {
+        for(i = 0; i < this.possibleMoves.length; i++) {
+            if(this.possibleMoves[i][0] == position_x && this.possibleMoves[i][1] == position_y) {
+                console.log("Moved Pawn to " + position_x + ", " + position_y);
+                this.mesh.position.set(position_x - 3.5, position_y - 3.5, .5);
+                this.position_x = position_x;
+                this.position_y = position_y;
+            }
+        }
+    }
+
+    setMesh(mesh) {
+        this.mesh = mesh;
+    }
+
+    printValidMoves() {
+        var printstring = this.constructor.name + "@[" + this.position_x + ", " + this.position_y + "]: ";
+        for(var i = 0; i < this.possibleMoves.length; i++) {
+            printstring = printstring + "[" + this.possibleMoves[i] + "] ";
+        }
+        console.log(printstring);
+    }
 }
 
 // Class for Pawn - Unit
-class Pawn {
+class Pawn extends Unit{
     constructor(position_x, position_y, color) {
         // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
+        super(position_x, position_y, color);
         if(this.color == colors.WHITE) {
             this.direction = 1;
         } else {
             this.direction = -1;
         }
+        this.possibleMoves = [];
     }
 
-    getPosition() { return this.position; }
-
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move_forward = checkBoard(this.position_x, this.position_y + this.direction);
         // Check if pawn is free to move forward.
-        if(!move_forward || move_forward != colors.NULL) {
-            possibleMoves.push([this.position_x, this.position_y + this.direction]);
+        if(move_forward == colors.EMPTY) {
+            this.possibleMoves.push([this.position_x, this.position_y + this.direction]);
         }
         // Check the two attacking directions for pawns.
         var attack1 = checkBoard(this.position_x + 1, this.position_y + this.direction);
-        if(attack1 && attack1 != this.color && attack1 != colors.NULL) {
-            possibleMoves.push([position_x + 1, position_y + this.direction]);
+        if(isOppositeColor(this.color, attack1)) {
+            this.possibleMoves.push([this.position_x + 1, this.position_y + this.direction]);
         }
-        var attack2 = checkBoard(this.position_x + 1, this.position_y + this.direction);
-        if(attack2 && attack2 != this.color && attack2 != colors.NULL) {
-            possibleMoves.push([position_x - 1, position_y + this.direction]);
+        var attack2 = checkBoard(this.position_x - 1, this.position_y + this.direction);
+        if(isOppositeColor(this.color, attack2)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y + this.direction]);
         }
         // Check if it can move two spaces for first move.
         var move_forward2;
@@ -76,36 +90,18 @@ class Pawn {
         } else if (this.color == colors.BLACK && this.position_y == 6) {
             move_forward2 = checkBoard(this.position_x, this.position_y + this.direction * 2);
         } else {
-            move_forward2 = null;
+            move_forward2 = colors.INVALID;
         }
-        if(!move_forward && !move_forward2) {
-            possibleMoves.push([this.position_x, this.position_y + this.direction * 2]);
+        if(move_forward == colors.EMPTY && move_forward2 == colors.EMPTY) {
+            this.possibleMoves.push([this.position_x, this.position_y + this.direction * 2]);
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
 }
 
-class Rook {
-    constructor(position_x, position_y, color) {
-        // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
-    }
-
-    getPosition() { return this.position; }
-
+class Rook extends Unit {
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move;
         var x = this.position_x;
         var y = this.position_y;
@@ -113,8 +109,12 @@ class Rook {
         while(x < 7) {
             x++;
             move = checkBoard(x, this.position_y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, this.position_y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, this.position_y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -125,8 +125,12 @@ class Rook {
         while(x > 0) {
             x--;
             move = checkBoard(x, this.position_y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, this.position_y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, this.position_y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -137,8 +141,12 @@ class Rook {
         while(y < 7) {
             y++;
             move = checkBoard(this.position_x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([this.position_x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([this.position_x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -149,37 +157,23 @@ class Rook {
         while(y > 0) {
             y--;
             move = checkBoard(this.position_x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([this.position_x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([this.position_x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
 }
 
-class Bishop {
-    constructor(position_x, position_y, color) {
-        // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
-    }
-
-    getPosition() { return this.position; }
-
+class Bishop extends Unit {
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move;
         var x = this.position_x;
         var y = this.position_y;
@@ -188,8 +182,12 @@ class Bishop {
             x++;
             y++;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -201,8 +199,12 @@ class Bishop {
             x--;
             y++;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -214,8 +216,12 @@ class Bishop {
             x--;
             y--;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -227,37 +233,23 @@ class Bishop {
             x++;
             y--;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
 }
 
-class Queen {
-    constructor(position_x, position_y, color) {
-        // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
-    }
-
-    getPosition() { return this.position; }
-
+class Queen extends Unit {
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move;
         var x = this.position_x;
         var y = this.position_y;
@@ -265,8 +257,12 @@ class Queen {
         while(x < 7) {
             x++;
             move = checkBoard(x, this.position_y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, this.position_y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, this.position_y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -277,8 +273,12 @@ class Queen {
         while(x > 0) {
             x--;
             move = checkBoard(x, this.position_y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, this.position_y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, this.position_y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -289,8 +289,12 @@ class Queen {
         while(y < 7) {
             y++;
             move = checkBoard(this.position_x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([this.position_x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([this.position_x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -301,8 +305,12 @@ class Queen {
         while(y > 0) {
             y--;
             move = checkBoard(this.position_x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([this.position_x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([this.position_x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -314,8 +322,12 @@ class Queen {
             x++;
             y++;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -327,8 +339,12 @@ class Queen {
             x--;
             y++;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -340,8 +356,12 @@ class Queen {
             x--;
             y--;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
@@ -353,147 +373,114 @@ class Queen {
             x++;
             y--;
             move = checkBoard(x, y);
-            if(!move || (move != this.color && move != colors.NULL)) {
-                possibleMoves.push([x, y]);
+            if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+                this.possibleMoves.push([x, y]);
+                // If piece is of opposite color then stop checking in that direction.
+                if(isOppositeColor(this.color, move)) {
+                    break;
+                }
             } else {
                 break;
             }
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
 }
 
-class King {
-    constructor(position_x, position_y, color) {
-        // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
-    }
-
-    getPosition() { return this.position; }
-
+class King extends Unit {
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move;
         // Right
         move = checkBoard(this.position_x + 1, this.position_y);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x + 1, this.position_y]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x + 1, this.position_y]);
         }
         // Left
         move = checkBoard(this.position_x - 1, this.position_y);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 1, this.position_y]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y]);
         }
         // Up
         move = checkBoard(this.position_x, this.position_y + 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x, this.position_y + 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x, this.position_y + 1]);
         }
         // Down
         move = checkBoard(this.position_x, this.position_y - 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x, this.position_y - 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x, this.position_y - 1]);
         }
         // Left-Up
         move = checkBoard(this.position_x - 1, this.position_y + 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 1, this.position_y + 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y + 1]);
         }
         // Left-Down
         move = checkBoard(this.position_x - 1, this.position_y - 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 1, this.position_y - 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y - 1]);
         }
         // Right-Up
         move = checkBoard(this.position_x + 1, this.position_y +  1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x  + 1, this.position_y  + 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x  + 1, this.position_y  + 1]);
         }
         // Right-Down
         move = checkBoard(this.position_x + 1, this.position_y - 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x + 1, this.position_y - 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x + 1, this.position_y - 1]);
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
-
 }
 
-class Knight {
-    constructor(position_x, position_y, color) {
-        // All units must be positioned within the board limits.
-        if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
-            this.position_x = position_x;
-            this.position_y = position_y;
-        } else {
-            throw "Unit is not positioned on the board."
-        }
-        // All units must have a valid color.
-        if(Object.values(colors).includes(color)) {
-            this.color = color;
-        } else {
-            throw "Color for unit is not black/white."
-        }
-    }
-
-    getPosition() { return this.position; }
-
+class Knight extends Unit {
     getPossibleMoves() {
-        var possibleMoves = [];
+        this.possibleMoves = [];
         var move;
         // Right2Up1
         move = checkBoard(this.position_x + 2, this.position_y + 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x + 2, this.position_y + 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x + 2, this.position_y + 1]);
         }
         // Right1Up2
         move = checkBoard(this.position_x + 1, this.position_y + 2);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x + 1, this.position_y + 2]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x + 1, this.position_y + 2]);
         }
         // Left2Up1
         move = checkBoard(this.position_x - 2, this.position_y + 1);
         //console.log(this.position_x - 2, this.position_y + 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 2, this.position_y + 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 2, this.position_y + 1]);
         }
         // Left1Up2
         move = checkBoard(this.position_x - 1, this.position_y + 2);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 1, this.position_y + 2]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y + 2]);
         }
         // Left2Down1
         move = checkBoard(this.position_x - 2, this.position_y - 1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 2, this.position_y - 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 2, this.position_y - 1]);
         }
         // Left1Down2
         move = checkBoard(this.position_x - 1, this.position_y - 2);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x - 1, this.position_y - 2]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x - 1, this.position_y - 2]);
         }
         // Right2Down1
         move = checkBoard(this.position_x + 2, this.position_y -  1);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x  + 2, this.position_y - 1]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x  + 2, this.position_y - 1]);
         }
         // Right1Down2
         move = checkBoard(this.position_x + 1, this.position_y - 2);
-        if(!move || (move != this.color && move != colors.NULL)) {
-            possibleMoves.push([this.position_x + 1, this.position_y - 2]);
+        if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
+            this.possibleMoves.push([this.position_x + 1, this.position_y - 2]);
         }
-        return possibleMoves;
+        return this.possibleMoves;
     }
 }
 
@@ -504,8 +491,12 @@ function checkBoard(position_x, position_y) {
                 return chessPieces[i].color;
             }
         }
-        return null;
+        return colors.EMPTY;
     } else {
-        return colors.NULL;
+        return colors.INVALID;
     }
+}
+
+function isOppositeColor(myColor, otherColor) {
+    return otherColor != colors.INVALID && otherColor != colors.EMPTY && otherColor != myColor;
 }

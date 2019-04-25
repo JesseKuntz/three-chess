@@ -120,44 +120,52 @@ function onWindowResize() {
 	render();
 }
 
-function load(url, x, y) {
+function load(url, x, y, unit) {
 	loader.load(url, function (gltf) {
 		scene.add(gltf.scene);
 		gltf.scene.children[0].scale.set(.05, .05, .05);
 		gltf.scene.children[0].rotation.x = Math.PI / 2;
 		gltf.scene.children[0].position.set(x, y, .5);
 
-		chessPieces.push(gltf.scene.children[0]);
+		unit.setMesh(gltf.scene.children[0]);
 	});
+	chessPieces.push(unit);
 }
 
 function loadPieces() {
-	load('models/rook.gltf', -3.5, -3.5);
-	chessPieces.push(new Rook(0, 0, colors.WHITE));
-	load('models/knight.gltf', -2.5, -3.5);
-	chessPieces.push(new Knight(1, 0, colors.WHITE));
-	load('models/bishop.gltf', -1.5, -3.5);
-	chessPieces.push(new Bishop(2, 0, colors.WHITE));
-	load('models/queen.gltf', -.5, -3.5);
-	chessPieces.push(new Queen(3, 0, colors.WHITE));
-	load('models/king.gltf', .5, -3.5);
-	chessPieces.push(new King(4, 0, colors.WHITE));
-	load('models/bishop.gltf', 1.5, -3.5);
-	chessPieces.push(new Bishop(5, 0, colors.WHITE));
-	load('models/knight.gltf', 2.5, -3.5);
-	chessPieces.push(new Knight(6, 0, colors.WHITE));
-	load('models/rook.gltf', 3.5, -3.5);
-	chessPieces.push(new Rook(7, 0, colors.WHITE));
+	var unit = new Rook(0, 0, colors.WHITE)
+	load('models/rook.gltf', -3.5, -3.5, unit);
+	unit = new Knight(1, 0, colors.WHITE);
+	load('models/knight.gltf', -2.5, -3.5, unit);
+	unit = new Bishop(2, 0, colors.WHITE);
+	load('models/bishop.gltf', -1.5, -3.5, unit);
+	unit = new Queen(3, 0, colors.WHITE);
+	load('models/queen.gltf', -.5, -3.5, unit);
+	unit = new King(4, 0, colors.WHITE);
+	load('models/king.gltf', .5, -3.5, unit);
+	unit = new Bishop(5, 0, colors.WHITE);
+	load('models/bishop.gltf', 1.5, -3.5, unit);
+	unit = new Knight(6, 0, colors.WHITE);
+	load('models/knight.gltf', 2.5, -3.5, unit);
+	unit = new Rook(7, 0, colors.WHITE);
+	load('models/rook.gltf', 3.5, -3.5, unit);
 	let start = -3.5
 	while (start <= 3.5) {
-		load('models/pawn.gltf', start, -2.5);
+		unit = new Pawn(parseInt(start + 3.5), 1, colors.WHITE);
+		load('models/pawn.gltf', start, -2.5, unit);
 		start++;
 	}
-	for(i = 0; i <= 7; i++) {
-		chessPieces.push(new Pawn(i, 1, colors.WHITE));
-	}
-	console.log(chessPieces.length);
+
+	unit = new Rook(6, 6, colors.BLACK);
+	load('models/rook.gltf', 2.5, 2.5, unit);
+	unit = new Pawn(0, 2, colors.BLACK);
+	load('models/pawn.gltf', -3.5, -1.5, unit);
+	unit = new Pawn(1, 3, colors.BLACK);
+	load('models/pawn.gltf', -2.5, -0.5, unit);
+	unit = new Queen(3, 3, colors.BLACK);
+	load('models/queen.gltf', -0.5, -0.5, unit);
 	for(j = 0; j < chessPieces.length; j++) {
-		console.log(chessPieces[j].constructor.name + ": X: " + chessPieces[j].position_x + ", Y: " + chessPieces[j].position_y + ", " + chessPieces[j].getPossibleMoves());
+		chessPieces[j].getPossibleMoves();
+		chessPieces[j].printValidMoves();
 	}
 }
