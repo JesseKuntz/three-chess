@@ -2,16 +2,21 @@
 // BASIC SETUP
 // ------------------------------------------------
 
-var camera, scene, renderer, controls, loader, light;
+var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSECTED;
+
+var normMaterial = new THREE.MeshNormalMaterial();
 
 boardTiles = [];
 chessPieces = [];
+justMeshes = [];
 
 init();
 animate();
 
 function init() {
-	loader = new THREE.GLTFLoader();
+	// Create the raycaster and mouse tracker for picking
+	raycaster = new THREE.Raycaster();
+	mouse = new THREE.Vector2();
 
 	// Create an empty scene
 	scene = new THREE.Scene();
@@ -46,7 +51,8 @@ function init() {
 	controls.addEventListener('change', render);
 
 	window.addEventListener('resize', onWindowResize, false);
-	render();
+	window.addEventListener('mousemove', onMouseMove, false);
+	document.addEventListener('mousedown', onMouseDown, false);
 
 	// ------------------------------------------------
 	// FUN STARTS HERE
@@ -79,22 +85,33 @@ function init() {
 		y--;
 	}
 
-	// Example of accessing an individual tile
-	console.log(boardTiles);
-	boardTiles[20].material.color.set("#ff0000");
-
 	// Load the pieces
 	loadPieces();
-
-	// Need to figure out how to only do this AFTER every piece is loaded in.
-	// I tried promises and callbacks, and neither worked... may try jQuery deferreds next.
-	console.log(chessPieces);
-	// chessPieces[1].rotation.y = Math.PI / 2;
 }
 
 function animate() {
 	requestAnimationFrame(animate);
 	controls.update();
+
+	// update the picking ray with the camera and mouse position
+	raycaster.setFromCamera( mouse, camera );
+
+	// calculate objects intersecting the picking ray
+	// var intersects = raycaster.intersectObjects( scene.children );
+	var intersects = raycaster.intersectObjects(justMeshes);
+
+	if ( intersects.length > 0 ) {
+		if ( INTERSECTED != intersects[ 0 ].object ) {
+			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+			INTERSECTED = intersects[ 0 ].object;
+			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+			INTERSECTED.material.emissive.setHex( 0xff0000 );
+		}
+	} else {
+		if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+		INTERSECTED = null;
+	}
+
 	renderer.render(scene, camera);
 }
 
@@ -128,11 +145,15 @@ function load(url, x, y, unit) {
 		gltf.scene.children[0].position.set(x, y, .5);
 
 		unit.setMesh(gltf.scene.children[0]);
+		justMeshes.push(gltf.scene.children[0]);
 	});
 	chessPieces.push(unit);
 }
 
 function loadPieces() {
+	// Create the loader
+	loader = new THREE.GLTFLoader();
+
 	var unit = new Rook(0, 0, colors.WHITE)
 	load('models/rook.gltf', -3.5, -3.5, unit);
 	unit = new Knight(1, 0, colors.WHITE);
@@ -168,4 +189,17 @@ function loadPieces() {
 		chessPieces[j].getPossibleMoves();
 		chessPieces[j].printValidMoves();
 	}
+}
+
+function onMouseMove(event) {
+	// calculate mouse position in normalized device coordinates
+	// (-1 to +1) for both components
+
+	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+
+function onMouseDown(event) {
+	console.log("Current selected: ")
+	console.log(INTERSECTED);
 }

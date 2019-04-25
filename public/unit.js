@@ -55,7 +55,7 @@ class Unit {
 }
 
 // Class for Pawn - Unit
-class Pawn extends Unit{
+class Pawn extends Unit {
     constructor(position_x, position_y, color) {
         // All units must be positioned within the board limits.
         super(position_x, position_y, color);
@@ -210,7 +210,7 @@ class Bishop extends Unit {
             }
         }
         x = this.position_x;
-        y = this.position_y;    
+        y = this.position_y;
         // Left-Down
         while(x > 0 && y > 0) {
             x--;
@@ -350,7 +350,7 @@ class Queen extends Unit {
             }
         }
         x = this.position_x;
-        y = this.position_y;   
+        y = this.position_y;
         // Left-Down
         while(x > 0 && y > 0) {
             x--;
