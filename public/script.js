@@ -2,11 +2,13 @@
 // BASIC SETUP
 // ------------------------------------------------
 
-var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSECTED;
+var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSECTED, tileIntersected, currPiece;
 
 var boardTiles = [];
 var chessPieces = [];
 var justMeshes = [];
+
+var pieceSelected = false;
 
 init();
 animate();
@@ -20,7 +22,7 @@ function init() {
 	scene = new THREE.Scene();
 
 	// Create a light
-	light = new THREE.PointLight( 0xff0000, 3, 100 );
+	light = new THREE.PointLight( 0xffffff, 3, 100 );
 	light.position.set(0, -10, 5 );
 	scene.add(light);
 
@@ -72,6 +74,7 @@ function animate() {
 
 	// calculate objects intersecting the picking ray
 	var intersects = raycaster.intersectObjects(justMeshes);
+	var boardIntersects = raycaster.intersectObjects(scene.children);
 
 	// If the mouse is touching a piece
 	if ( intersects.length > 0 ) {
@@ -82,16 +85,38 @@ function animate() {
 			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
 			INTERSECTED.material.emissive.setHex( 0xff0000 );
 
-			highlightPossibleMoves();
+			if (!pieceSelected) highlightPossibleMoves();
 		}
 	}
 	// If the mouse is NOT touching a piece
 	else {
 		if ( INTERSECTED ) {
 			INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-			resetBoardColors();
+			if (!pieceSelected) {
+				resetBoardColors();
+			}
 		}
 		INTERSECTED = null;
+	}
+
+	// If the mouse is touching a tile with a piece selected
+	if ( boardIntersects.length > 0 && pieceSelected) {
+		// If the tile is a NEW tile
+		if ( tileIntersected != boardIntersects[ 0 ].object) {
+
+			// SET IT TO BLACK OR WHITE, DEPENDING ON WHAT NUMBER IT IS?? OR SOMETHING??
+			if ( tileIntersected ) tileIntersected.material.color.setHex( tileIntersected.currentColor );
+			tileIntersected = boardIntersects[ 0 ].object;
+			tileIntersected.currentColor = tileIntersected.material.color.getHex();
+			if (boardIntersects[ 0 ].object.material.color.getHex() == 0x00ff00) tileIntersected.material.color.setHex(0x0000ff);
+		}
+	}
+	// If the mouse is NOT touching a tile
+	else {
+		if ( tileIntersected ) {
+			tileIntersected.material.color.setHex( tileIntersected.currentColor );
+		}
+		tileIntersected = null;
 	}
 
 	renderer.render(scene, camera);
@@ -173,6 +198,19 @@ function loadPieces() {
 	}
 }
 
+function highlightPossibleMoves() {
+	let id = INTERSECTED.uuid;
+	let currentPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+	let moves = currentPiece.possibleMoves;
+	for (let i = 0; i < currentPiece.possibleMoves.length; i++) {
+		let x = moves[i][0];
+		let y = moves[i][1];
+		boardTiles[x][y].material.color.set("#00ff00");
+		boardTiles[x][y].material.transparent = true;
+		boardTiles[x][y].material.opacity = 0.5;
+	}
+}
+
 function loadBoard() {
 	var geometry = new THREE.BoxGeometry(1, 1, 1);
 
@@ -204,18 +242,6 @@ function loadBoard() {
 	}
 }
 
-function highlightPossibleMoves() {
-	let id = INTERSECTED.uuid;
-	let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
-
-	let moves = currPiece.possibleMoves;
-	for(let i = 0; i < currPiece.possibleMoves.length; i++) {
-		let x = moves[i][0];
-		let y = moves[i][1];
-		boardTiles[x][y].material.color.set("#00ff00")
-	}
-}
-
 function resetBoardColors() {
 	let color = "#000000"
 	for (let c = 0; c < boardTiles.length; c++) {
@@ -224,6 +250,8 @@ function resetBoardColors() {
 
 			if (color === "#ffffff") color = "#000000";
 			else color = "#ffffff";
+
+			boardTiles[c][r].material.opacity = 1.0
 		}
 
 		if (color === "#ffffff") color = "#000000";
@@ -241,15 +269,30 @@ function onMouseMove(event) {
 
 // For now, not actually necessary. But we will change things up soon.
 function onMouseDown(event) {
-	if (INTERSECTED !== null) {
+	resetBoardColors();
+	pieceSelected = false;
+
+	if (INTERSECTED) {
 		let id = INTERSECTED.uuid;
-		let currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+		currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
 
 		let moves = currPiece.possibleMoves;
 		for(let i = 0; i < currPiece.possibleMoves.length; i++) {
 			let x = moves[i][0];
 			let y = moves[i][1];
-			boardTiles[x][y].material.color.set("#00ff00")
+			boardTiles[x][y].material.color.set("#00ff00");
+			boardTiles[x][y].material.opacity = 1.0;
 		}
+
+		pieceSelected = true;
 	}
+
+	if (tileIntersected) {
+		// Position in THREE.js coordinates of the tile (Vector3):
+		let screenCoords = tileIntersected.position;
+
+		// Move the piece to tileCoords and update its position:
+		// ROY's METHOD HERE
+	}
+
 }
