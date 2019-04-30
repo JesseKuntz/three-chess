@@ -27,16 +27,20 @@ class Unit {
         this.mesh;
     }
 
-    getPosition() { return this.position; }
+    getPosition() { return [this.position_x, this.position_y]; }
+    setPosition(position_x, position_y) { this.position_x = position_x; this.position_y = position_y;}
     getPossibleMoves() { return []; }
 
     makeMove(position_x, position_y) {
         for(i = 0; i < this.possibleMoves.length; i++) {
             if(this.possibleMoves[i][0] == position_x && this.possibleMoves[i][1] == position_y) {
-                console.log("Moved Pawn to " + position_x + ", " + position_y);
-                this.mesh.position.set(position_x - 3.5, position_y - 3.5, .5);
-                this.position_x = position_x;
-                this.position_y = position_y;
+                if(currentMove === undefined || currentMove.length != 0) {
+                    throw "Unable to make move"
+                } else {
+                    console.log("Moving Unit to " + position_x + ", " + position_y);
+                    currentMove = [this, position_x, position_y];
+                }
+                // this.mesh.position.set(x - 3.5, y - 3.5, .5);
             }
         }
     }

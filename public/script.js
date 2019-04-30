@@ -7,6 +7,8 @@ var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSEC
 var boardTiles = [];
 var chessPieces = [];
 var justMeshes = [];
+var moveClock = 0;
+var currentMove = [];
 
 init();
 animate();
@@ -51,6 +53,7 @@ function init() {
 	window.addEventListener('resize', onWindowResize, false);
 	window.addEventListener('mousemove', onMouseMove, false);
 	document.addEventListener('mousedown', onMouseDown, false);
+	document.addEventListener('keypress', moveTest, false);
 
 	// ------------------------------------------------
 	// FUN STARTS HERE
@@ -93,7 +96,21 @@ function animate() {
 		}
 		INTERSECTED = null;
 	}
-
+	if(!(currentMove === undefined) && currentMove.length != 0) {
+		moveClock += 1;
+		moveSpeed = 60
+		unit = currentMove[0];
+		console.log(moveClock);
+		unit.mesh.position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
+			(1 - moveClock / moveSpeed) * unit.position_y + (moveClock / moveSpeed) * currentMove[2] - 3.5, 0.5)
+		// If at the end of the animation, reset clock and set new position of unit.
+		if(moveClock == moveSpeed) {
+			moveClock = 0;
+			unit.setPosition(currentMove[1], currentMove[2]);
+			currentMove = [];
+			unit.getPossibleMoves();
+		}
+	}
 	renderer.render(scene, camera);
 }
 
@@ -252,4 +269,8 @@ function onMouseDown(event) {
 			boardTiles[x][y].material.color.set("#00ff00")
 		}
 	}
+}
+
+function moveTest(event) {
+	chessPieces[19].makeMove(chessPieces[19].position_x + 2, 3);
 }
