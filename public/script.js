@@ -86,7 +86,6 @@ function animate() {
 			INTERSECTED = intersects[ 0 ].object;
 			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
 			INTERSECTED.material.emissive.setHex( 0xff0000 );
-
 			if (!pieceSelected) highlightPossibleMoves();
 		}
 	}
@@ -126,17 +125,22 @@ function animate() {
 		moveClock += 1;
 		moveSpeed = 60
 		unit = currentMove[0];
-		unit.mesh.position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
+		unit.getMesh().position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
 			(1 - moveClock / moveSpeed) * unit.position_y + (moveClock / moveSpeed) * currentMove[2] - 3.5, 0.5)
 		// If at the end of the animation, reset clock and set new position of unit.
 		if(moveClock == moveSpeed) {
 			moveClock = 0;
+			var capturedUnit = checkBoardUnit(currentMove[1], currentMove[2]);
+			if(capturedUnit) {
+				justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
+				chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
+				capturedUnit.removeMesh();
+			}
 			unit.setPosition(currentMove[1], currentMove[2]);
-			currentMove = [];
 			for(u = 0; u < chessPieces.length; u++) {
 				chessPieces[u].getPossibleMoves();
-				console.log(u);
 			}
+			currentMove = [];
 		}
 	}
 
@@ -172,7 +176,7 @@ function load(url, x, y, unit) {
 		gltf.scene.children[0].rotation.x = Math.PI / 2;
 		gltf.scene.children[0].position.set(x, y, .5);
 
-		unit.setMesh(gltf.scene.children[0]);
+		unit.setMesh(gltf.scene);
 		justMeshes.push(gltf.scene.children[0]);
 	});
 	chessPieces.push(unit);
@@ -215,13 +219,13 @@ function loadPieces() {
 	load('models/queen.gltf', -0.5, -0.5, unit);
 	for(j = 0; j < chessPieces.length; j++) {
 		chessPieces[j].getPossibleMoves();
-		chessPieces[j].printValidMoves();
+		// chessPieces[j].printValidMoves();
 	}
 }
 
 function highlightPossibleMoves() {
 	let id = INTERSECTED.uuid;
-	let currentPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+	let currentPiece = chessPieces.find(piece => piece.getMesh().uuid === id);
 	let moves = currentPiece.possibleMoves;
 	for (let i = 0; i < currentPiece.possibleMoves.length; i++) {
 		let x = moves[i][0];
@@ -295,7 +299,7 @@ function onMouseDown(event) {
 
 	if (INTERSECTED) {
 		let id = INTERSECTED.uuid;
-		currPiece = chessPieces.find(piece => piece.mesh.uuid === id);
+		currPiece = chessPieces.find(piece => piece.getMesh().uuid === id);
 
 		let moves = currPiece.possibleMoves;
 		for(let i = 0; i < currPiece.possibleMoves.length; i++) {
@@ -311,10 +315,11 @@ function onMouseDown(event) {
 	if (tileIntersected) {
 		// Position in THREE.js coordinates of the tile (Vector3):
 		let screenCoords = tileIntersected.position;
-		console.log(screenCoords)
 		// Move the piece to tileCoords and update its position:
-		// ROY's METHOD HERE
-		currPiece.makeMove(screenCoords.x + 3.5, screenCoords.y + 3.5);
+		// Make sure the piece is not moving to its current position.
+		if(screenCoords.x + 3.5 != currPiece.position_x || screenCoords.y + 3.5 != currPiece.position_y) {
+			currPiece.makeMove(screenCoords.x + 3.5, screenCoords.y + 3.5);
+		}
 	}
 
 }

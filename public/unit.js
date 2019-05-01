@@ -24,7 +24,7 @@ class Unit {
             throw "Color for unit is not black/white."
         }
         this.possibleMoves = [];
-        this.mesh;
+        this.meshScene;
     }
 
     getPosition() { return [this.position_x, this.position_y]; }
@@ -45,8 +45,19 @@ class Unit {
         }
     }
 
-    setMesh(mesh) {
-        this.mesh = mesh;
+    setMesh(meshScene) {
+        this.meshScene = meshScene;
+    }
+
+    getMesh() {
+        return this.meshScene.children[0];
+    }
+
+    removeMesh() {
+        scene.remove(this.meshScene);
+        this.meshScene.children[0].geometry.dispose();
+        this.meshScene.children[0].material.dispose();
+        this.meshScene.children[0] = undefined;
     }
 
     printValidMoves() {
@@ -73,26 +84,26 @@ class Pawn extends Unit {
 
     getPossibleMoves() {
         this.possibleMoves = [];
-        var move_forward = checkBoard(this.position_x, this.position_y + this.direction);
+        var move_forward = checkBoardColor(this.position_x, this.position_y + this.direction);
         // Check if pawn is free to move forward.
         if(move_forward == colors.EMPTY) {
             this.possibleMoves.push([this.position_x, this.position_y + this.direction]);
         }
         // Check the two attacking directions for pawns.
-        var attack1 = checkBoard(this.position_x + 1, this.position_y + this.direction);
+        var attack1 = checkBoardColor(this.position_x + 1, this.position_y + this.direction);
         if(isOppositeColor(this.color, attack1)) {
             this.possibleMoves.push([this.position_x + 1, this.position_y + this.direction]);
         }
-        var attack2 = checkBoard(this.position_x - 1, this.position_y + this.direction);
+        var attack2 = checkBoardColor(this.position_x - 1, this.position_y + this.direction);
         if(isOppositeColor(this.color, attack2)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y + this.direction]);
         }
         // Check if it can move two spaces for first move.
         var move_forward2;
         if(this.color == colors.WHITE && this.position_y == 1) {
-            move_forward2 = checkBoard(this.position_x, this.position_y + this.direction * 2);
+            move_forward2 = checkBoardColor(this.position_x, this.position_y + this.direction * 2);
         } else if (this.color == colors.BLACK && this.position_y == 6) {
-            move_forward2 = checkBoard(this.position_x, this.position_y + this.direction * 2);
+            move_forward2 = checkBoardColor(this.position_x, this.position_y + this.direction * 2);
         } else {
             move_forward2 = colors.INVALID;
         }
@@ -112,7 +123,7 @@ class Rook extends Unit {
         // Right
         while(x < 7) {
             x++;
-            move = checkBoard(x, this.position_y);
+            move = checkBoardColor(x, this.position_y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, this.position_y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -128,7 +139,7 @@ class Rook extends Unit {
         // Left
         while(x > 0) {
             x--;
-            move = checkBoard(x, this.position_y);
+            move = checkBoardColor(x, this.position_y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, this.position_y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -144,7 +155,7 @@ class Rook extends Unit {
         // Up
         while(y < 7) {
             y++;
-            move = checkBoard(this.position_x, y);
+            move = checkBoardColor(this.position_x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([this.position_x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -160,7 +171,7 @@ class Rook extends Unit {
         // Down
         while(y > 0) {
             y--;
-            move = checkBoard(this.position_x, y);
+            move = checkBoardColor(this.position_x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([this.position_x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -185,7 +196,7 @@ class Bishop extends Unit {
         while(x < 7 && y < 7) {
             x++;
             y++;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -202,7 +213,7 @@ class Bishop extends Unit {
         while(x > 0 && y < 7) {
             x--;
             y++;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -219,7 +230,7 @@ class Bishop extends Unit {
         while(x > 0 && y > 0) {
             x--;
             y--;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -236,7 +247,7 @@ class Bishop extends Unit {
         while(x < 7 && y > 0) {
             x++;
             y--;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -260,7 +271,7 @@ class Queen extends Unit {
         // Right
         while(x < 7) {
             x++;
-            move = checkBoard(x, this.position_y);
+            move = checkBoardColor(x, this.position_y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, this.position_y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -276,7 +287,7 @@ class Queen extends Unit {
         // Left
         while(x > 0) {
             x--;
-            move = checkBoard(x, this.position_y);
+            move = checkBoardColor(x, this.position_y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, this.position_y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -292,7 +303,7 @@ class Queen extends Unit {
         // Up
         while(y < 7) {
             y++;
-            move = checkBoard(this.position_x, y);
+            move = checkBoardColor(this.position_x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([this.position_x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -308,7 +319,7 @@ class Queen extends Unit {
         // Down
         while(y > 0) {
             y--;
-            move = checkBoard(this.position_x, y);
+            move = checkBoardColor(this.position_x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([this.position_x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -325,7 +336,7 @@ class Queen extends Unit {
         while(x < 7 && y < 7) {
             x++;
             y++;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -342,7 +353,7 @@ class Queen extends Unit {
         while(x > 0 && y < 7) {
             x--;
             y++;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -359,7 +370,7 @@ class Queen extends Unit {
         while(x > 0 && y > 0) {
             x--;
             y--;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -376,7 +387,7 @@ class Queen extends Unit {
         while(x < 7 && y > 0) {
             x++;
             y--;
-            move = checkBoard(x, y);
+            move = checkBoardColor(x, y);
             if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
                 this.possibleMoves.push([x, y]);
                 // If piece is of opposite color then stop checking in that direction.
@@ -396,42 +407,42 @@ class King extends Unit {
         this.possibleMoves = [];
         var move;
         // Right
-        move = checkBoard(this.position_x + 1, this.position_y);
+        move = checkBoardColor(this.position_x + 1, this.position_y);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x + 1, this.position_y]);
         }
         // Left
-        move = checkBoard(this.position_x - 1, this.position_y);
+        move = checkBoardColor(this.position_x - 1, this.position_y);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y]);
         }
         // Up
-        move = checkBoard(this.position_x, this.position_y + 1);
+        move = checkBoardColor(this.position_x, this.position_y + 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x, this.position_y + 1]);
         }
         // Down
-        move = checkBoard(this.position_x, this.position_y - 1);
+        move = checkBoardColor(this.position_x, this.position_y - 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x, this.position_y - 1]);
         }
         // Left-Up
-        move = checkBoard(this.position_x - 1, this.position_y + 1);
+        move = checkBoardColor(this.position_x - 1, this.position_y + 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y + 1]);
         }
         // Left-Down
-        move = checkBoard(this.position_x - 1, this.position_y - 1);
+        move = checkBoardColor(this.position_x - 1, this.position_y - 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y - 1]);
         }
         // Right-Up
-        move = checkBoard(this.position_x + 1, this.position_y +  1);
+        move = checkBoardColor(this.position_x + 1, this.position_y +  1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x  + 1, this.position_y  + 1]);
         }
         // Right-Down
-        move = checkBoard(this.position_x + 1, this.position_y - 1);
+        move = checkBoardColor(this.position_x + 1, this.position_y - 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x + 1, this.position_y - 1]);
         }
@@ -444,43 +455,43 @@ class Knight extends Unit {
         this.possibleMoves = [];
         var move;
         // Right2Up1
-        move = checkBoard(this.position_x + 2, this.position_y + 1);
+        move = checkBoardColor(this.position_x + 2, this.position_y + 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x + 2, this.position_y + 1]);
         }
         // Right1Up2
-        move = checkBoard(this.position_x + 1, this.position_y + 2);
+        move = checkBoardColor(this.position_x + 1, this.position_y + 2);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x + 1, this.position_y + 2]);
         }
         // Left2Up1
-        move = checkBoard(this.position_x - 2, this.position_y + 1);
+        move = checkBoardColor(this.position_x - 2, this.position_y + 1);
         //console.log(this.position_x - 2, this.position_y + 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 2, this.position_y + 1]);
         }
         // Left1Up2
-        move = checkBoard(this.position_x - 1, this.position_y + 2);
+        move = checkBoardColor(this.position_x - 1, this.position_y + 2);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y + 2]);
         }
         // Left2Down1
-        move = checkBoard(this.position_x - 2, this.position_y - 1);
+        move = checkBoardColor(this.position_x - 2, this.position_y - 1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 2, this.position_y - 1]);
         }
         // Left1Down2
-        move = checkBoard(this.position_x - 1, this.position_y - 2);
+        move = checkBoardColor(this.position_x - 1, this.position_y - 2);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x - 1, this.position_y - 2]);
         }
         // Right2Down1
-        move = checkBoard(this.position_x + 2, this.position_y -  1);
+        move = checkBoardColor(this.position_x + 2, this.position_y -  1);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x  + 2, this.position_y - 1]);
         }
         // Right1Down2
-        move = checkBoard(this.position_x + 1, this.position_y - 2);
+        move = checkBoardColor(this.position_x + 1, this.position_y - 2);
         if(move == colors.EMPTY || isOppositeColor(this.color, move)) {
             this.possibleMoves.push([this.position_x + 1, this.position_y - 2]);
         }
@@ -488,7 +499,7 @@ class Knight extends Unit {
     }
 }
 
-function checkBoard(position_x, position_y) {
+function checkBoardColor(position_x, position_y) {
     if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
         for(i=0; i < chessPieces.length; i++) {
             if(chessPieces[i].position_x == position_x && chessPieces[i].position_y == position_y) {
@@ -499,6 +510,18 @@ function checkBoard(position_x, position_y) {
     } else {
         return colors.INVALID;
     }
+}
+
+function checkBoardUnit(position_x, position_y) {
+    if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
+        for(i=0; i < chessPieces.length; i++) {
+            if(chessPieces[i].position_x == position_x && chessPieces[i].position_y == position_y) {
+                console.log(chessPieces[i].constructor.name);
+                return chessPieces[i];
+            }
+        }
+    }
+    return null;
 }
 
 function isOppositeColor(myColor, otherColor) {
