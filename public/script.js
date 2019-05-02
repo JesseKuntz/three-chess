@@ -13,6 +13,7 @@ var currentMove = [];
 
 var pieceSelected = false;
 var loadingComplete = false;
+var turn = "white";
 
 init();
 animate();
@@ -30,7 +31,6 @@ function init() {
 		});
 	};
 
-
 	// Create the raycaster and mouse tracker for picking
 	raycaster = new THREE.Raycaster();
 	mouse = new THREE.Vector2();
@@ -46,6 +46,7 @@ function init() {
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
 	camera.position.z = 8;
+
 
 	// Create a renderer with Antialiasing
 	renderer = new THREE.WebGLRenderer({antialias:true});
@@ -100,9 +101,14 @@ function animate() {
 			if ( INTERSECTED != intersects[ 0 ].object ) {
 				if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 				INTERSECTED = intersects[ 0 ].object;
-				INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-				INTERSECTED.material.emissive.setHex( 0xff0000 );
-				if (!pieceSelected) highlightPossibleMoves();
+				// Check if the piece is the current turn's piece
+				let id = INTERSECTED.uuid;
+				let currPiece = chessPieces.find(piece => piece.getMesh().uuid === id);
+				if (currPiece.color == turn) {
+					INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+					INTERSECTED.material.emissive.setHex( 0xff0000 );
+					if (!pieceSelected) highlightPossibleMoves();
+				}
 			}
 		}
 		// If the mouse is NOT touching a piece
@@ -320,15 +326,17 @@ function onMouseDown(event) {
 		let id = INTERSECTED.uuid;
 		currPiece = chessPieces.find(piece => piece.getMesh().uuid === id);
 
-		let moves = currPiece.possibleMoves;
-		for(let i = 0; i < currPiece.possibleMoves.length; i++) {
-			let x = moves[i][0];
-			let y = moves[i][1];
-			boardTiles[x][y].material.color.set("#00ff00");
-			boardTiles[x][y].material.opacity = 1.0;
-		}
+		if (currPiece.color == turn) {
+			let moves = currPiece.possibleMoves;
+			for(let i = 0; i < currPiece.possibleMoves.length; i++) {
+				let x = moves[i][0];
+				let y = moves[i][1];
+				boardTiles[x][y].material.color.set("#00ff00");
+				boardTiles[x][y].material.opacity = 1.0;
+			}
 
-		pieceSelected = true;
+			pieceSelected = true;
+		}
 	}
 
 	if (tileIntersected) {
@@ -339,6 +347,10 @@ function onMouseDown(event) {
 		if(screenCoords.x + 3.5 != currPiece.position_x || screenCoords.y + 3.5 != currPiece.position_y) {
 			currPiece.makeMove(screenCoords.x + 3.5, screenCoords.y + 3.5);
 		}
+
+		if (turn == "white") turn = "black";
+		else turn = "white";
+		$("#turn").text(`Turn: ${turn}`);
 	}
 
 }
