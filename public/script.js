@@ -2,7 +2,8 @@
 // BASIC SETUP
 // ------------------------------------------------
 
-var camera, scene, renderer, controls, loader, light, raycaster, mouse, INTERSECTED, tileIntersected, currPiece;
+var camera, scene, renderer, controls, loader, light, raycaster, mouse,
+		INTERSECTED, tileIntersected, currPiece, manager;
 
 var boardTiles = [];
 var chessPieces = [];
@@ -11,11 +12,25 @@ var moveClock = 0;
 var currentMove = [];
 
 var pieceSelected = false;
+var loadingComplete = false;
 
 init();
 animate();
 
 function init() {
+	// Create the loading manager for the loading screen
+	manager = new THREE.LoadingManager()
+
+	manager.onLoad = function ( ) {
+		let loading = $('#loading-screen');
+		loading.fadeOut(() => {
+			loading.remove();
+			loadingComplete = true;
+			animate();
+		});
+	};
+
+
 	// Create the raycaster and mouse tracker for picking
 	raycaster = new THREE.Raycaster();
 	mouse = new THREE.Vector2();
@@ -68,83 +83,85 @@ function init() {
 }
 
 function animate() {
-	requestAnimationFrame(animate);
-	controls.update();
+	if (loadingComplete) {
+		requestAnimationFrame(animate);
+		controls.update();
 
-	// update the picking ray with the camera and mouse position
-	raycaster.setFromCamera( mouse, camera );
+		// update the picking ray with the camera and mouse position
+		raycaster.setFromCamera( mouse, camera );
 
-	// calculate objects intersecting the picking ray
-	var intersects = raycaster.intersectObjects(justMeshes);
-	var boardIntersects = raycaster.intersectObjects(scene.children);
+		// calculate objects intersecting the picking ray
+		var intersects = raycaster.intersectObjects(justMeshes);
+		var boardIntersects = raycaster.intersectObjects(scene.children);
 
-	// If the mouse is touching a piece
-	if ( intersects.length > 0 ) {
-		// If the piece is a NEW piece
-		if ( INTERSECTED != intersects[ 0 ].object ) {
-			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-			INTERSECTED = intersects[ 0 ].object;
-			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-			INTERSECTED.material.emissive.setHex( 0xff0000 );
-			if (!pieceSelected) highlightPossibleMoves();
-		}
-	}
-	// If the mouse is NOT touching a piece
-	else {
-		if ( INTERSECTED ) {
-			INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-			if (!pieceSelected) {
-				resetBoardColors();
+		// If the mouse is touching a piece
+		if ( intersects.length > 0 ) {
+			// If the piece is a NEW piece
+			if ( INTERSECTED != intersects[ 0 ].object ) {
+				if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+				INTERSECTED = intersects[ 0 ].object;
+				INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+				INTERSECTED.material.emissive.setHex( 0xff0000 );
+				if (!pieceSelected) highlightPossibleMoves();
 			}
 		}
-		INTERSECTED = null;
-	}
-
-	// If the mouse is touching a tile with a piece selected
-	if ( boardIntersects.length > 0 && pieceSelected) {
-		// If the tile is a NEW tile
-		if ( tileIntersected != boardIntersects[ 0 ].object) {
-
-			// SET IT TO BLACK OR WHITE, DEPENDING ON WHAT NUMBER IT IS?? OR SOMETHING??
-			if ( tileIntersected ) tileIntersected.material.color.setHex( tileIntersected.currentColor );
-			tileIntersected = boardIntersects[ 0 ].object;
-			tileIntersected.currentColor = tileIntersected.material.color.getHex();
-			if (boardIntersects[ 0 ].object.material.color.getHex() == 0x00ff00) tileIntersected.material.color.setHex(0x0000ff);
-		}
-	}
-	// If the mouse is NOT touching a tile
-	else {
-		if ( tileIntersected ) {
-			tileIntersected.material.color.setHex( tileIntersected.currentColor );
-		}
-		tileIntersected = null;
-	}
-
-	// If there is a piece currently making a move
-	if(!(currentMove === undefined) && currentMove.length != 0) {
-		moveClock += 1;
-		moveSpeed = 60
-		unit = currentMove[0];
-		unit.getMesh().position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
-			(1 - moveClock / moveSpeed) * unit.position_y + (moveClock / moveSpeed) * currentMove[2] - 3.5, 0.5)
-		// If at the end of the animation, reset clock and set new position of unit.
-		if(moveClock == moveSpeed) {
-			moveClock = 0;
-			var capturedUnit = checkBoardUnit(currentMove[1], currentMove[2]);
-			if(capturedUnit) {
-				justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
-				chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
-				capturedUnit.removeMesh();
+		// If the mouse is NOT touching a piece
+		else {
+			if ( INTERSECTED ) {
+				INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+				if (!pieceSelected) {
+					resetBoardColors();
+				}
 			}
-			unit.setPosition(currentMove[1], currentMove[2]);
-			for(u = 0; u < chessPieces.length; u++) {
-				chessPieces[u].getPossibleMoves();
-			}
-			currentMove = [];
+			INTERSECTED = null;
 		}
-	}
 
-	renderer.render(scene, camera);
+		// If the mouse is touching a tile with a piece selected
+		if ( boardIntersects.length > 0 && pieceSelected) {
+			// If the tile is a NEW tile
+			if ( tileIntersected != boardIntersects[ 0 ].object) {
+
+				// SET IT TO BLACK OR WHITE, DEPENDING ON WHAT NUMBER IT IS?? OR SOMETHING??
+				if ( tileIntersected ) tileIntersected.material.color.setHex( tileIntersected.currentColor );
+				tileIntersected = boardIntersects[ 0 ].object;
+				tileIntersected.currentColor = tileIntersected.material.color.getHex();
+				if (boardIntersects[ 0 ].object.material.color.getHex() == 0x00ff00) tileIntersected.material.color.setHex(0x0000ff);
+			}
+		}
+		// If the mouse is NOT touching a tile
+		else {
+			if ( tileIntersected ) {
+				tileIntersected.material.color.setHex( tileIntersected.currentColor );
+			}
+			tileIntersected = null;
+		}
+
+		// If there is a piece currently making a move
+		if(!(currentMove === undefined) && currentMove.length != 0) {
+			moveClock += 1;
+			moveSpeed = 60
+			unit = currentMove[0];
+			unit.getMesh().position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
+				(1 - moveClock / moveSpeed) * unit.position_y + (moveClock / moveSpeed) * currentMove[2] - 3.5, 0.5)
+			// If at the end of the animation, reset clock and set new position of unit.
+			if(moveClock == moveSpeed) {
+				moveClock = 0;
+				var capturedUnit = checkBoardUnit(currentMove[1], currentMove[2]);
+				if(capturedUnit) {
+					justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
+					chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
+					capturedUnit.removeMesh();
+				}
+				unit.setPosition(currentMove[1], currentMove[2]);
+				for(u = 0; u < chessPieces.length; u++) {
+					chessPieces[u].getPossibleMoves();
+				}
+				currentMove = [];
+			}
+		}
+
+		renderer.render(scene, camera);
+	}
 }
 
 function render() {
@@ -184,8 +201,9 @@ function load(url, x, y, unit) {
 
 function loadPieces() {
 	// Create the loader
-	loader = new THREE.GLTFLoader();
+	loader = new THREE.GLTFLoader(manager);
 
+	// WHITE PIECES
 	var unit = new Rook(0, 0, colors.WHITE)
 	load('models/rook.gltf', -3.5, -3.5, unit);
 	unit = new Knight(1, 0, colors.WHITE);
@@ -209,6 +227,7 @@ function loadPieces() {
 		start++;
 	}
 
+	// BLACK PIECES
 	unit = new Rook(6, 6, colors.BLACK);
 	load('models/rook.gltf', 2.5, 2.5, unit);
 	unit = new Pawn(0, 2, colors.BLACK);
@@ -322,4 +341,9 @@ function onMouseDown(event) {
 		}
 	}
 
+}
+
+function onTransitionEnd( event ) {
+	console.log("ended");
+	event.target.remove();
 }
