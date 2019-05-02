@@ -122,6 +122,8 @@ function animate() {
 			INTERSECTED = null;
 		}
 
+
+
 		// If the mouse is touching a tile with a piece selected
 		if ( boardIntersects.length > 0 && pieceSelected) {
 			// If the tile is a NEW tile
@@ -322,7 +324,24 @@ function onMouseDown(event) {
 	resetBoardColors();
 	pieceSelected = false;
 
-	if (INTERSECTED) {
+	if (tileIntersected) {
+		// Position in THREE.js coordinates of the tile (Vector3):
+		let screenCoords = tileIntersected.position;
+
+		// Move the piece to tileCoords and update its position:
+		// Make sure the piece is not moving to its current position.
+		if(screenCoords.x + 3.5 != currPiece.position_x || screenCoords.y + 3.5 != currPiece.position_y) {
+			currPiece.makeMove(screenCoords.x + 3.5, screenCoords.y + 3.5);
+		}
+
+		tileIntersected = null;
+		resetBoardColors();
+
+		if (turn == "white") turn = "black";
+		else turn = "white";
+		$("#turn").text(`Turn: ${turn}`);
+	}
+	else if (INTERSECTED) {
 		let id = INTERSECTED.uuid;
 		currPiece = chessPieces.find(piece => piece.getMesh().uuid === id);
 
@@ -338,21 +357,6 @@ function onMouseDown(event) {
 			pieceSelected = true;
 		}
 	}
-
-	if (tileIntersected) {
-		// Position in THREE.js coordinates of the tile (Vector3):
-		let screenCoords = tileIntersected.position;
-		// Move the piece to tileCoords and update its position:
-		// Make sure the piece is not moving to its current position.
-		if(screenCoords.x + 3.5 != currPiece.position_x || screenCoords.y + 3.5 != currPiece.position_y) {
-			currPiece.makeMove(screenCoords.x + 3.5, screenCoords.y + 3.5);
-		}
-
-		if (turn == "white") turn = "black";
-		else turn = "white";
-		$("#turn").text(`Turn: ${turn}`);
-	}
-
 }
 
 function onTransitionEnd( event ) {
