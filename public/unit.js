@@ -1,3 +1,5 @@
+// import { start } from "repl";
+
 // IMPORTANT NOTE: Game is played with White starting on rows 0 and 1, Black starting on rows 6 and 7.
 
 const colors = {
@@ -34,11 +36,11 @@ class Unit {
     makeMove(position_x, position_y) {
         for(i = 0; i < this.possibleMoves.length; i++) {
             if(this.possibleMoves[i][0] == position_x && this.possibleMoves[i][1] == position_y) {
-                if(currentMove === undefined || currentMove.length != 0) {
+                if(currentMove !== undefined) {
                     throw "Unable to make move"
                 } else {
-                    console.log("Moving Unit to " + position_x + ", " + position_y);
-                    currentMove = [this, position_x, position_y];
+                    console.log("Moving " + this.constructor.name + " to " + position_x + ", " + position_y);
+                    currentMove = new Move(this, [this.position_x, this.position_y], [position_x, position_y]);
                 }
                 // this.mesh.position.set(x - 3.5, y - 3.5, .5);
             }
@@ -516,7 +518,6 @@ function checkBoardUnit(position_x, position_y) {
     if(position_x >= 0 && position_x <= 7 && position_y >= 0 && position_y <= 7) {
         for(i=0; i < chessPieces.length; i++) {
             if(chessPieces[i].position_x == position_x && chessPieces[i].position_y == position_y) {
-                console.log(chessPieces[i].constructor.name);
                 return chessPieces[i];
             }
         }
@@ -526,4 +527,24 @@ function checkBoardUnit(position_x, position_y) {
 
 function isOppositeColor(myColor, otherColor) {
     return otherColor != colors.INVALID && otherColor != colors.EMPTY && otherColor != myColor;
+}
+
+class Move {
+    constructor(unit, startPosition, endPosition) {
+        this.unit = unit;
+        this.startPosition = startPosition;
+        this.endPosition = endPosition;
+    }
+
+    getStartPosition() {
+        return this.startPosition;
+    }
+
+    getEndPosition() {
+        return this.endPosition;
+    }
+
+    getUnit() {
+        return this.unit;
+    }
 }

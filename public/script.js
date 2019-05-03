@@ -9,7 +9,8 @@ var boardTiles = [];
 var chessPieces = [];
 var justMeshes = [];
 var moveClock = 0;
-var currentMove = [];
+var currentMove = undefined;
+var capturedUnit;
 
 var pieceSelected = false;
 var loadingComplete = false;
@@ -145,26 +146,60 @@ function animate() {
 		}
 
 		// If there is a piece currently making a move
-		if(!(currentMove === undefined) && currentMove.length != 0) {
-			moveClock += 1;
-			moveSpeed = 60
-			unit = currentMove[0];
-			unit.getMesh().position.set((1 - moveClock / moveSpeed) * unit.position_x + (moveClock / moveSpeed) * currentMove[1] - 3.5,
-				(1 - moveClock / moveSpeed) * unit.position_y + (moveClock / moveSpeed) * currentMove[2] - 3.5, 0.5)
-			// If at the end of the animation, reset clock and set new position of unit.
-			if(moveClock == moveSpeed) {
-				moveClock = 0;
-				var capturedUnit = checkBoardUnit(currentMove[1], currentMove[2]);
+		if(!(currentMove === undefined)) {
+			unit = currentMove.getUnit();
+			if(moveClock == 0) {
+				// Check if there is a unit in the destination
+				capturedUnit = checkBoardUnit(currentMove.getEndPosition()[0], currentMove.getEndPosition()[1]);
+				// If so, we need to remove it from the pieces to check if the king is in danger.
+				// We do not remove the mesh yet, because the move could be invalid due to check.
 				if(capturedUnit) {
-					justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
 					chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
-					capturedUnit.removeMesh();
 				}
-				unit.setPosition(currentMove[1], currentMove[2]);
+				unit.setPosition(currentMove.getEndPosition()[0], currentMove.getEndPosition()[1]);
+				// Update possible moves
 				for(u = 0; u < chessPieces.length; u++) {
 					chessPieces[u].getPossibleMoves();
 				}
-				currentMove = [];
+				// Check if a king is in danger
+				var whitecheck = isCheck(colors.WHITE);
+				if(whitecheck) {
+					console.log("check for white!");
+				}
+				//var blackcheck = isCheck(colors.BLACK);
+			}
+			// This checks if the player making the move is still in check.
+			if(!(whitecheck && turn == "white")) { // TODO: Add for black
+				moveClock += 1;
+				moveSpeed = 60	
+				unit.getMesh().position.set((1 - moveClock / moveSpeed) * currentMove.getStartPosition()[0] + (moveClock / moveSpeed) * currentMove.getEndPosition()[0] - 3.5,
+					(1 - moveClock / moveSpeed) * currentMove.getStartPosition()[1] + (moveClock / moveSpeed) * currentMove.getEndPosition()[1] - 3.5, 0.5);
+				// If at the end of the animation, reset clock and set new position of unit.
+				if(moveClock == moveSpeed) {
+					moveClock = 0;
+					currentMove = undefined;
+					// If we get here then the move is valid. If a unit is meant to be captured, we can now remove the mesh
+					if(capturedUnit) {
+						justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
+						capturedUnit.removeMesh();
+					}
+					// Change turns
+					if (turn == "white") turn = "black";
+					else turn = "white";
+					$("#turn").text(`Turn: ${turn}`);
+				}
+			} else { // This means that the posed move put the mover in check.
+				unit.setPosition(currentMove.getStartPosition()[0], currentMove.getStartPosition()[1]);
+				// We need to put the unit back into the piece list.
+				if(capturedUnit) {
+					chessPieces.push(capturedUnit);
+				}
+				// Update unit possible moves.
+				for(u = 0; u < chessPieces.length; u++) {
+					chessPieces[u].getPossibleMoves();
+				}
+				console.log("That would put you in check!");
+				currentMove = undefined;
 			}
 		}
 
@@ -336,10 +371,6 @@ function onMouseDown(event) {
 
 		tileIntersected = null;
 		resetBoardColors();
-
-		if (turn == "white") turn = "black";
-		else turn = "white";
-		$("#turn").text(`Turn: ${turn}`);
 	}
 	else if (INTERSECTED) {
 		let id = INTERSECTED.uuid;
@@ -362,4 +393,23 @@ function onMouseDown(event) {
 function onTransitionEnd( event ) {
 	console.log("ended");
 	event.target.remove();
+}
+
+function isCheck(color) {
+	for(i = 0; i < chessPieces.length; i++) {
+		if(chessPieces[i] instanceof King && chessPieces[i].color == color) {
+			var king = chessPieces[i];
+		}
+	}
+	
+	for(i = 0; i < chessPieces.length; i++) {
+		// If the piece is of the opposite color and its possible moves includes the king then the king is in check
+		if(isOppositeColor(king.color, chessPieces[i].color)) {
+			for(j = 0; j < chessPieces[i].possibleMoves.length; j++) {
+				if(chessPieces[i].possibleMoves[j][0] == king.getPosition()[0] && chessPieces[i].possibleMoves[j][1] == king.getPosition()[1]) {
+					return true;
+				}
+			}
+		}
+	}
 }
