@@ -46,7 +46,7 @@ function init() {
 
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
-	camera.position.z = 8;
+	camera.position.z = 9;
 
 
 	// Create a renderer with Antialiasing
@@ -171,7 +171,7 @@ function animate() {
 			// This checks if the player making the move is still in check.
 			if(!(whitecheck && turn == "white")) { // TODO: Add for black
 				moveClock += 1;
-				moveSpeed = 60	
+				moveSpeed = 60
 				unit.getMesh().position.set((1 - moveClock / moveSpeed) * currentMove.getStartPosition()[0] + (moveClock / moveSpeed) * currentMove.getEndPosition()[0] - 3.5,
 					(1 - moveClock / moveSpeed) * currentMove.getStartPosition()[1] + (moveClock / moveSpeed) * currentMove.getEndPosition()[1] - 3.5, 0.5);
 				// If at the end of the animation, reset clock and set new position of unit.
@@ -302,7 +302,7 @@ function loadBoard() {
 	var geometry = new THREE.BoxGeometry(1, 1, 1);
 
 	let x = -3.5;
-	let color = "#000000"
+	let color = "#000000";
 	for (let c = 0; c < 8; c++) {
 		let y = -3.5;
 		let col = [];
@@ -327,6 +327,20 @@ function loadBoard() {
 
 		boardTiles.push(col);
 	}
+
+	// create the border
+	createBorderEdge(0, -4.5, 8, 1);
+	createBorderEdge(0, 4.5, 8, 1);
+	createBorderEdge(-4.5, 0, 1, 10);
+	createBorderEdge(4.5, 0, 1, 10);
+}
+
+function createBorderEdge(x, y, xlength, ylength) {
+	let geometry = new THREE.BoxGeometry(xlength, ylength, 1);
+	let material = new THREE.MeshBasicMaterial({color: "#000000"});
+	let border = new THREE.Mesh(geometry, material);
+	scene.add(border);
+	border.position.set(x, y, 0)
 }
 
 function resetBoardColors() {
@@ -401,7 +415,7 @@ function isCheck(color) {
 			var king = chessPieces[i];
 		}
 	}
-	
+
 	for(i = 0; i < chessPieces.length; i++) {
 		// If the piece is of the opposite color and its possible moves includes the king then the king is in check
 		if(isOppositeColor(king.color, chessPieces[i].color)) {
