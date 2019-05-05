@@ -11,7 +11,7 @@ var justMeshes = [];
 var moveClock = 0;
 var currentMove = undefined;
 var capturedUnit;
-
+var checkmate = false;
 var pieceSelected = false;
 var loadingComplete = false;
 var turn = "white";
@@ -101,6 +101,10 @@ function animate() {
 		var intersects = raycaster.intersectObjects(justMeshes);
 		var boardIntersects = raycaster.intersectObjects(scene.children);
 
+		if(checkmate) {
+			$("#turn").text(`Checkmate for ${turn}!`);
+		}
+
 		// If the mouse is touching a piece
 		if ( intersects.length > 0 ) {
 			// If the piece is a NEW piece
@@ -168,13 +172,13 @@ function animate() {
 				}
 				// Check if a king is in danger
 				var whitecheck = isCheck(colors.WHITE);
+				var blackcheck = isCheck(colors.BLACK);
 				if(whitecheck) {
 					console.log("check for white!");
 				}
-				//var blackcheck = isCheck(colors.BLACK);
 			}
 			// This checks if the player making the move is still in check.
-			if(!(whitecheck && turn == "white")) { // TODO: Add for black
+			if(!(whitecheck && turn == "white") && !(blackcheck && turn == "black")) {
 				moveClock += 1;
 				moveSpeed = 60
 				unit.getMesh().position.set((1 - moveClock / moveSpeed) * currentMove.getStartPosition()[0] + (moveClock / moveSpeed) * currentMove.getEndPosition()[0] - 3.5,
@@ -188,6 +192,10 @@ function animate() {
 						justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
 						capturedUnit.removeMesh();
 					}
+					// if((turn == "white" && isCheckMate(colors.WHITE)) || (turn == "black" && isCheckMate(colors.BLACK))) {
+					// 	checkmate = true;
+					// 	return;
+					// }
 					// Change turns
 					if (turn == "white") turn = "black";
 					else turn = "white";
@@ -278,14 +286,30 @@ function loadPieces() {
 	}
 
 	// BLACK PIECES
-	unit = new Rook(6, 6, colors.BLACK);
-	load('models/rook.gltf', 2.5, 2.5, unit);
-	unit = new Pawn(0, 2, colors.BLACK);
-	load('models/pawn.gltf', -3.5, -1.5, unit);
-	unit = new Pawn(1, 3, colors.BLACK);
-	load('models/pawn.gltf', -2.5, -0.5, unit);
-	unit = new Queen(3, 3, colors.BLACK);
-	load('models/queen.gltf', -0.5, -0.5, unit);
+	unit = new Rook(0, 7, colors.BLACK);
+	load('models/rook.gltf', -3.5, 3.5, unit);
+	unit = new Knight(1, 7, colors.BLACK);
+	load('models/knight.gltf', -2.5, 3.5, unit);
+	unit = new Bishop(2, 7, colors.BLACK);
+	load('models/bishop.gltf', -1.5, 3.5, unit);
+	unit = new Queen(3, 7, colors.BLACK);
+	load('models/queen.gltf', -0.5, 3.5, unit);
+	unit = new King(4, 7, colors.BLACK);
+	load('models/king.gltf', 0.5, 3.5, unit);
+	unit = new Bishop(5, 7, colors.BLACK);
+	load('models/bishop.gltf', 1.5, 3.5, unit);
+	unit = new Knight(6, 7, colors.BLACK);
+	load('models/knight.gltf', 2.5, 3.5, unit);
+	unit = new Rook(7, 7, colors.BLACK);
+	load('models/rook.gltf', 3.5, 3.5, unit);
+
+	start = -3.5
+	while (start <= 3.5) {
+		unit = new Pawn(parseInt(start + 3.5), 6, colors.BLACK);
+		load('models/pawn.gltf', start, 2.5, unit);
+		start++;
+	}
+
 	for(j = 0; j < chessPieces.length; j++) {
 		chessPieces[j].getPossibleMoves();
 		// chessPieces[j].printValidMoves();
@@ -433,4 +457,27 @@ function isCheck(color) {
 			}
 		}
 	}
+}
+
+function isCheckMate(color) {
+	for(i = 0; i < chessPieces.length; i++) {
+		if(chessPieces[i] instanceof King && isOppositeColor(chessPieces[i].color, color)) {
+			var king = chessPieces[i];
+		}
+	}
+
+	for(i = 0; i < chessPieces.length; i++) {
+		if(chessPieces[i].color == color) {
+			for(j = 0; j < chessPieces[i].possibleMoves.length; j++) {
+				var old_x = chessPieces[i].getPosition()[0];
+				var old_y = chessPieces[i].getPosition()[1];
+				chessPieces[i].setPosition(chessPieces[i].possibleMoves[j][0], chessPieces[i].possibleMoves[j][1]);
+				if(!isCheck(color)) {
+					return false;
+				}
+				chessPieces.setPosition(old_x, old_y);
+			}
+		}
+	}
+	return true;
 }
