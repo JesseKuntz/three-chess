@@ -2,7 +2,7 @@
 // BASIC SETUP
 // ------------------------------------------------
 
-var camera, scene, renderer, controls, loader, light, raycaster, mouse,
+var camera, scene, renderer, controls, loader, raycaster, mouse,
 		INTERSECTED, tileIntersected, currPiece, manager;
 
 var boardTiles = [];
@@ -40,14 +40,19 @@ function init() {
 	scene = new THREE.Scene();
 
 	// Create a light
-	light = new THREE.PointLight( 0xffffff, 3, 100 );
-	light.position.set(0, -10, 5 );
-	scene.add(light);
+	lightWhite = new THREE.PointLight( 0xffffff, 3, 100 );
+	lightWhite.position.set(0, -10, 5 );
+	scene.add(lightWhite);
+
+	lightBlack = new THREE.PointLight( 0xffffff, 3, 100 );
+	lightBlack.position.set(0, 10, 5 );
+	scene.add(lightBlack);
 
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
-	camera.position.z = 9;
-
+	camera.position.z = 7.5;
+	camera.position.y = -4.5;
+	camera.lookAt(0, 0, 0)
 
 	// Create a renderer with Antialiasing
 	renderer = new THREE.WebGLRenderer({antialias:true});
@@ -59,15 +64,15 @@ function init() {
 	document.body.appendChild(renderer.domElement);
 
 	// Trackball
-	controls = new THREE.TrackballControls(camera);
-	controls.rotateSpeed = 3.0;
-	controls.zoomSpeed = 1.2;
-	controls.panSpeed = 0.8;
-	controls.noZoom = false;
-	controls.noPan = false;
-	controls.staticMoving = true;
-	controls.dynamicDampingFactor = 0.3;
-	controls.addEventListener('change', render);
+	// controls = new THREE.TrackballControls(camera);
+	// controls.rotateSpeed = 3.0;
+	// controls.zoomSpeed = 1.2;
+	// controls.panSpeed = 0.8;
+	// controls.noZoom = false;
+	// controls.noPan = false;
+	// controls.staticMoving = true;
+	// controls.dynamicDampingFactor = 0.3;
+	// controls.addEventListener('change', render);
 
 	window.addEventListener('resize', onWindowResize, false);
 	window.addEventListener('mousemove', onMouseMove, false);
@@ -87,7 +92,7 @@ function init() {
 function animate() {
 	if (loadingComplete) {
 		requestAnimationFrame(animate);
-		controls.update();
+		// controls.update();
 
 		// update the picking ray with the camera and mouse position
 		raycaster.setFromCamera( mouse, camera );
@@ -188,6 +193,7 @@ function animate() {
 					else turn = "white";
 					$("#turn").text(`Turn: ${turn}`);
 					$("#turn").css("border-color", turn);
+					scene.rotation.z += 180 * Math.PI / 180;
 				}
 			} else { // This means that the posed move put the mover in check.
 				unit.setPosition(currentMove.getStartPosition()[0], currentMove.getStartPosition()[1]);
@@ -226,7 +232,7 @@ function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	controls.handleResize();
+	// controls.handleResize();
 	render();
 }
 
