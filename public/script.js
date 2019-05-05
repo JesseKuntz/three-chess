@@ -187,6 +187,7 @@ function animate() {
 					if (turn == "white") turn = "black";
 					else turn = "white";
 					$("#turn").text(`Turn: ${turn}`);
+					$("#turn").css("border-color", turn);
 				}
 			} else { // This means that the posed move put the mover in check.
 				unit.setPosition(currentMove.getStartPosition()[0], currentMove.getStartPosition()[1]);
