@@ -10,6 +10,7 @@ var chessPieces = [];
 var justMeshes = [];
 var moveClock = 0;
 var currentMove = undefined;
+var cameraRotate = [];
 var capturedUnit;
 var checkmate = false;
 var pieceSelected = false;
@@ -39,20 +40,22 @@ function init() {
 	// Create an empty scene
 	scene = new THREE.Scene();
 
-	// Create a light
-	lightWhite = new THREE.PointLight( 0xffffff, 3, 100 );
-	lightWhite.position.set(0, -10, 5 );
-	scene.add(lightWhite);
-
-	lightBlack = new THREE.PointLight( 0xffffff, 3, 100 );
-	lightBlack.position.set(0, 10, 5 );
-	scene.add(lightBlack);
+	// lightBlack = new THREE.PointLight( 0xffffff, 3, 100 );
+	// lightBlack.position.set(0, 10, 5 );
+	// scene.add(lightBlack);
 
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
 	camera.position.z = 7.5;
 	camera.position.y = -4.5;
-	camera.lookAt(0, 0, 0)
+	camera.lookAt(0, 0, 0);
+
+	// Create a light
+	lightWhite = new THREE.PointLight( 0xffffff, 3, 100 );
+	lightWhite.position.set(0, -10, 5 );
+	camera.add(lightWhite);
+
+	scene.add(camera);
 
 	// Create a renderer with Antialiasing
 	renderer = new THREE.WebGLRenderer({antialias:true});
@@ -103,6 +106,20 @@ function animate() {
 
 		if(checkmate) {
 			$("#turn").text(`Checkmate for ${turn}!`);
+			renderer.render(scene, camera);
+			return;
+		}
+
+		if(cameraRotate.length > 0) {
+			moveClock += 1;
+			var moveSpeed = 60;
+			camera.position.y = (1 - moveClock / moveSpeed) * cameraRotate[0] + (moveClock / moveSpeed) * cameraRotate[1];
+			camera.rotation.x = (1 - moveClock / moveSpeed) * cameraRotate[2] + (moveClock / moveSpeed) * cameraRotate[3];
+			camera.rotation.z = (1 - moveClock / moveSpeed) * cameraRotate[4] + (moveClock / moveSpeed) * cameraRotate[5];
+			if(moveClock == moveSpeed) {
+				cameraRotate = [];
+				moveClock = 0;
+			}
 			renderer.render(scene, camera);
 			return;
 		}
@@ -208,7 +225,18 @@ function animate() {
 					else turn = colors.WHITE;
 					$("#turn").text(`Turn: ${turn}`);
 					$("#turn").css("border-color", turn);
-					scene.rotation.z += 180 * Math.PI / 180;
+					var old_camera_y = camera.position.y;
+					var new_camera_y = old_camera_y * -1;
+					var old_rotation_x = camera.rotation.x;
+					var new_rotation_x = old_rotation_x * -1;
+					var old_rotation_z = camera.rotation.z;
+					var new_rotation_z = old_rotation_z + Math.PI;
+					cameraRotate = [old_camera_y, new_camera_y, old_rotation_x, new_rotation_x, old_rotation_z, new_rotation_z];
+					// camera.position.y *= -1;
+					// camera.rotation.x *= -1;
+					// camera.rotation.z += Math.PI;
+					// //camera.rotation.x += Math.PI / 6;
+					// console.log(camera.position, camera.rotation);
 				}
 			} else { // This means that the posed move put the mover in check.
 				unit.setPosition(currentMove.getStartPosition()[0], currentMove.getStartPosition()[1]);
