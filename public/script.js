@@ -14,7 +14,7 @@ var capturedUnit;
 var checkmate = false;
 var pieceSelected = false;
 var loadingComplete = false;
-var turn = "white";
+var turn = colors.WHITE;
 
 init();
 animate();
@@ -103,6 +103,8 @@ function animate() {
 
 		if(checkmate) {
 			$("#turn").text(`Checkmate for ${turn}!`);
+			renderer.render(scene, camera);
+			return;
 		}
 
 		// If the mouse is touching a piece
@@ -176,9 +178,12 @@ function animate() {
 				if(whitecheck) {
 					console.log("check for white!");
 				}
+				if(blackcheck) {
+					console.log("check for black");
+				}
 			}
 			// This checks if the player making the move is still in check.
-			if(!(whitecheck && turn == "white") && !(blackcheck && turn == "black")) {
+			if(!(whitecheck && turn == colors.WHITE) && !(blackcheck && turn == colors.BLACK)) {
 				moveClock += 1;
 				moveSpeed = 60
 				unit.getMesh().position.set((1 - moveClock / moveSpeed) * currentMove.getStartPosition()[0] + (moveClock / moveSpeed) * currentMove.getEndPosition()[0] - 3.5,
@@ -192,13 +197,15 @@ function animate() {
 						justMeshes.splice( justMeshes.indexOf(capturedUnit.getMesh()), 1);
 						capturedUnit.removeMesh();
 					}
-					// if((turn == "white" && isCheckMate(colors.WHITE)) || (turn == "black" && isCheckMate(colors.BLACK))) {
-					// 	checkmate = true;
-					// 	return;
-					// }
+					console.log("checking for checkmate");
+					if(turn == colors.WHITE) {
+						checkmate = isCheckMate(colors.BLACK);
+					} else if(turn == colors.BLACK) {
+						checkmate = isCheckMate(colors.WHITE);
+					}
 					// Change turns
-					if (turn == "white") turn = "black";
-					else turn = "white";
+					if (turn == colors.WHITE) turn = colors.BLACK;
+					else turn = colors.WHITE;
 					$("#turn").text(`Turn: ${turn}`);
 					$("#turn").css("border-color", turn);
 					scene.rotation.z += 180 * Math.PI / 180;
@@ -452,32 +459,61 @@ function isCheck(color) {
 		if(isOppositeColor(king.color, chessPieces[i].color)) {
 			for(j = 0; j < chessPieces[i].possibleMoves.length; j++) {
 				if(chessPieces[i].possibleMoves[j][0] == king.getPosition()[0] && chessPieces[i].possibleMoves[j][1] == king.getPosition()[1]) {
+					//console.log("Check From: ", chessPieces[i].constructor.name, chessPieces[i].getPosition(), chessPieces[i].possibleMoves);
 					return true;
 				}
 			}
 		}
 	}
+
+	return false;
 }
 
 function isCheckMate(color) {
-	for(i = 0; i < chessPieces.length; i++) {
-		if(chessPieces[i] instanceof King && isOppositeColor(chessPieces[i].color, color)) {
-			var king = chessPieces[i];
-		}
-	}
-
-	for(i = 0; i < chessPieces.length; i++) {
-		if(chessPieces[i].color == color) {
-			for(j = 0; j < chessPieces[i].possibleMoves.length; j++) {
-				var old_x = chessPieces[i].getPosition()[0];
-				var old_y = chessPieces[i].getPosition()[1];
-				chessPieces[i].setPosition(chessPieces[i].possibleMoves[j][0], chessPieces[i].possibleMoves[j][1]);
-				if(!isCheck(color)) {
-					return false;
-				}
-				chessPieces.setPosition(old_x, old_y);
+	if(isCheck(color)) {
+		for(i = 0; i < chessPieces.length; i++) {
+			if(chessPieces[i] instanceof King && chessPieces[i].color == color) {
+				var king = chessPieces[i];
 			}
 		}
+		for(p = 0; p < chessPieces.length; p++) {
+			var unit = chessPieces[p];
+			if(unit.color == color) {
+				var old_x = unit.getPosition()[0];
+				var old_y = unit.getPosition()[1];
+				for(m = 0; m < unit.possibleMoves.length; m++) {
+					var capturedUnit = checkBoardUnit(unit.possibleMoves[m][0], unit.possibleMoves[m][1]);
+					if(capturedUnit && isOppositeColor(capturedUnit.color, unit.color)) {
+						chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
+					}
+					unit.setPosition(unit.possibleMoves[m][0], unit.possibleMoves[m][1]);
+					for(x = 0; x < chessPieces.length; x++) {
+						chessPieces[x].getPossibleMoves();
+					}
+					if(!isCheck(color)) {
+						console.log("not checkmate: ", unit.constructor.name, unit.color, color, old_x, old_y, unit.getPosition(), isCheck(color));
+						unit.setPosition(old_x, old_y);
+						if(capturedUnit && isOppositeColor(capturedUnit.color, unit.color)) {
+							chessPieces.push(capturedUnit);
+						}
+						for(x = 0; x < chessPieces.length; x++) {
+							chessPieces[x].getPossibleMoves();
+						}
+						return false;
+					}
+					if(capturedUnit && isOppositeColor(capturedUnit.color, unit.color)) {
+						chessPieces.push(capturedUnit);
+					}
+					unit.setPosition(old_x, old_y);
+					for(x = 0; x < chessPieces.length; x++) {
+						chessPieces[x].getPossibleMoves();
+					}
+				}
+			}
+		}
+		console.log("Checkmate!");
+		return true;
 	}
-	return true;
+	console.log("Not check");
+	return false;
 }
