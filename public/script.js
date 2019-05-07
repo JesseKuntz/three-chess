@@ -17,6 +17,9 @@ var pieceSelected = false;
 var loadingComplete = false;
 var turn = colors.WHITE;
 
+var whiteTile = new THREE.TextureLoader().load( "models/textures/marble.jpg" );
+var blackTile = new THREE.TextureLoader().load( "models/textures/obsidian.jpg" );
+
 init();
 animate();
 
@@ -40,9 +43,9 @@ function init() {
 	// Create an empty scene
 	scene = new THREE.Scene();
 
-	// lightBlack = new THREE.PointLight( 0xffffff, 3, 100 );
-	// lightBlack.position.set(0, 10, 5 );
-	// scene.add(lightBlack);
+	directionalLight = new THREE.DirectionalLight( 0xffffff, 2 );
+	directionalLight.position.set(-1, 0, 0);
+	scene.add(directionalLight);
 
 	// Create a basic perspective camera
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
@@ -51,7 +54,7 @@ function init() {
 	camera.lookAt(0, 0, 0);
 
 	// Create a light
-	lightWhite = new THREE.PointLight( 0xffffff, 3, 100 );
+	lightWhite = new THREE.PointLight( 0xffffff, 2, 100, 2);
 	lightWhite.position.set(0, -10, 5 );
 	camera.add(lightWhite);
 
@@ -287,6 +290,11 @@ function load(url, x, y, unit) {
 		gltf.scene.children[0].position.set(x, y, .5);
 
 		unit.setMesh(gltf.scene);
+		if(unit.constructor.name == "Knight" && unit.color == colors.WHITE) {
+			unit.getMesh().rotation.y -= Math.PI / 2;
+		} else if(unit.constructor.name == "Knight" && unit.color == colors.BLACK) {
+			unit.getMesh().rotation.y += Math.PI / 2;
+		}
 		justMeshes.push(gltf.scene.children[0]);
 	});
 	chessPieces.push(unit);
@@ -366,63 +374,75 @@ function highlightPossibleMoves() {
 
 function loadBoard() {
 	var geometry = new THREE.BoxGeometry(1, 1, 1);
-
+	var material = blackTile;
 	let x = -3.5;
-	let color = "#000000";
+	let color = colors.BLACK;
 	for (let c = 0; c < 8; c++) {
 		let y = -3.5;
 		let col = [];
 
 		for (let r = 0; r < 8; r++) {
-			let material = new THREE.MeshBasicMaterial({color: color});
+			if (color === colors.WHITE) {
+				material = new THREE.MeshBasicMaterial( { map: whiteTile });
+			} else {
+				material = new THREE.MeshBasicMaterial( { map: blackTile });
+			}
 			let cube = new THREE.Mesh(geometry, material);
 			scene.add(cube);
 
 			cube.position.set(x, y, 0)
 			y++;
 
-			if (color === "#ffffff") color = "#000000";
-			else color = "#ffffff";
+			if (color === colors.WHITE) color = colors.BLACK;
+			else color = colors.WHITE;
 
 			col.push(cube);
 		}
 
-		if (color === "#ffffff") color = "#000000";
-		else color = "#ffffff";
+		if (color === colors.WHITE) color = colors.BLACK;
+		else color = colors.WHITE;
 		x++;
 
 		boardTiles.push(col);
 	}
 
 	// create the border
-	createBorderEdge(0, -4.5, 8, 1);
-	createBorderEdge(0, 4.5, 8, 1);
-	createBorderEdge(-4.5, 0, 1, 10);
-	createBorderEdge(4.5, 0, 1, 10);
+	createBorderEdge();
 }
 
-function createBorderEdge(x, y, xlength, ylength) {
-	let geometry = new THREE.BoxGeometry(xlength, ylength, 1);
-	let material = new THREE.MeshBasicMaterial({color: "#000000"});
-	let border = new THREE.Mesh(geometry, material);
-	scene.add(border);
-	border.position.set(x, y, 0)
+function createBorderEdge() {
+	//let geometry = new THREE.BoxGeometry(xlength, ylength, 1);
+	// let material = new THREE.MeshBasicMaterial({color: "#000000"});
+	let loader = new THREE.GLTFLoader(manager);
+	let url = "models/chessboard.gltf";
+	loader.load(url, function (gltf) {
+		scene.add(gltf.scene);
+		//gltf.scene.children[2].scale.set(4.5, 1/5, 4.5);
+		gltf.scene.children[2].rotation.x = Math.PI / 2;
+		// gltf.scene.children[2].position.set(0, 0, 0);
+	});
 }
 
 function resetBoardColors() {
-	let color = "#000000"
+	let color = colors.BLACK;
+	var material = blackTile;
 	for (let c = 0; c < boardTiles.length; c++) {
 		for (let r = 0; r < boardTiles[0].length; r++) {
-			boardTiles[c][r].material.color.set(color);
+			if (color === colors.WHITE) {
+				material = new THREE.MeshBasicMaterial( { map: whiteTile });
+			} else {
+				material = new THREE.MeshBasicMaterial( { map: blackTile });
+			}
+			boardTiles[c][r].material = material;
 
-			if (color === "#ffffff") color = "#000000";
-			else color = "#ffffff";
+			if (color === colors.WHITE) color = colors.BLACK;
+			else color = colors.WHITE;
 
 			boardTiles[c][r].material.opacity = 1.0
 		}
 
-		if (color === "#ffffff") color = "#000000";
-		else color = "#ffffff";
+		if (color === colors.WHITE) color = colors.BLACK;
+		else color = colors.WHITE;
 	}
 }
 
