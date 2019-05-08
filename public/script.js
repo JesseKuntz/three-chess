@@ -3,7 +3,7 @@
 // ------------------------------------------------
 
 var camera, scene, renderer, controls, loader, raycaster, mouse,
-		INTERSECTED, tileIntersected, currPiece, manager;
+		INTERSECTED, tileIntersected, currPiece, manager, mixer;
 
 var boardTiles = [];
 var chessPieces = [];
@@ -99,6 +99,8 @@ function animate() {
 	if (loadingComplete) {
 		requestAnimationFrame(animate);
 		// controls.update();
+
+		mixer.update(0.1)
 
 		// update the picking ray with the camera and mouse position
 		raycaster.setFromCamera( mouse, camera );
@@ -352,6 +354,21 @@ function loadPieces() {
 		load('models/black/pawn.gltf', start, 2.5, unit);
 		start++;
 	}
+
+	// Load animated piece
+	loader.load('models/black/rookAnimated.gltf', function (gltf) {
+		scene.add(gltf.scene);
+		console.log(gltf)
+		let model = gltf.scene;
+		model.scale.set(.05, .05, .05);
+		model.rotation.x = Math.PI / 2;
+		model.position.set(-0.5, -0.5, .5);
+
+		mixer = new THREE.AnimationMixer(model);
+		gltf.animations.forEach((clip) => {
+    	mixer.clipAction(clip).play();
+		});
+	});
 
 	for(j = 0; j < chessPieces.length; j++) {
 		chessPieces[j].getPossibleMoves();
