@@ -334,53 +334,67 @@ function loadPieces() {
 	// WHITE PIECES
 	var unit = new Rook(0, 0, colors.WHITE)
 	load('models/white/rook.gltf', -3.5, -3.5, unit);
+	loadAnimation('models/white/rookAnimated.gltf', unit);
 	unit = new Knight(1, 0, colors.WHITE);
 	load('models/white/knight.gltf', -2.5, -3.5, unit);
+	loadAnimation('models/white/knightAnimated.gltf', unit);
 	unit = new Bishop(2, 0, colors.WHITE);
 	load('models/white/bishop.gltf', -1.5, -3.5, unit);
+	loadAnimation('models/white/bishopAnimated.gltf', unit);
 	unit = new Queen(3, 0, colors.WHITE);
 	load('models/white/queen.gltf', -.5, -3.5, unit);
+	loadAnimation('models/white/queenAnimated.gltf', unit);
 	unit = new King(4, 0, colors.WHITE);
 	load('models/white/king.gltf', .5, -3.5, unit);
+	loadAnimation('models/white/kingAnimated.gltf', unit);
 	unit = new Bishop(5, 0, colors.WHITE);
 	load('models/white/bishop.gltf', 1.5, -3.5, unit);
+	loadAnimation('models/white/bishopAnimated.gltf', unit);
 	unit = new Knight(6, 0, colors.WHITE);
 	load('models/white/knight.gltf', 2.5, -3.5, unit);
+	loadAnimation('models/white/knightAnimated.gltf', unit);
 	unit = new Rook(7, 0, colors.WHITE);
 	load('models/white/rook.gltf', 3.5, -3.5, unit);
+	loadAnimation('models/white/rookAnimated.gltf', unit);
 	let start = -3.5
 	while (start <= 3.5) {
 		unit = new Pawn(parseInt(start + 3.5), 1, colors.WHITE);
 		load('models/white/pawn.gltf', start, -2.5, unit);
+		loadAnimation('models/white/pawnAnimated.gltf', unit);
 		start++;
 	}
 
 	// BLACK PIECES
 	unit = new Rook(0, 7, colors.BLACK);
 	load('models/black/rook.gltf', -3.5, 3.5, unit);
+	loadAnimation('models/black/rookAnimated.gltf', unit);
 	unit = new Knight(1, 7, colors.BLACK);
 	load('models/black/knight.gltf', -2.5, 3.5, unit);
+	loadAnimation('models/black/knightAnimated.gltf', unit);
 	unit = new Bishop(2, 7, colors.BLACK);
 	load('models/black/bishop.gltf', -1.5, 3.5, unit);
+	loadAnimation('models/black/bishopAnimated.gltf', unit);
 	unit = new Queen(3, 7, colors.BLACK);
 	load('models/black/queen.gltf', -0.5, 3.5, unit);
+	loadAnimation('models/black/queenAnimated.gltf', unit);
 	unit = new King(4, 7, colors.BLACK);
 	load('models/black/king.gltf', 0.5, 3.5, unit);
+	loadAnimation('models/black/kingAnimated.gltf', unit);
 	unit = new Bishop(5, 7, colors.BLACK);
 	load('models/black/bishop.gltf', 1.5, 3.5, unit);
+	loadAnimation('models/black/bishopAnimated.gltf', unit);
 	unit = new Knight(6, 7, colors.BLACK);
 	load('models/black/knight.gltf', 2.5, 3.5, unit);
+	loadAnimation('models/black/knightAnimated.gltf', unit);
 	unit = new Rook(7, 7, colors.BLACK);
 	load('models/black/rook.gltf', 3.5, 3.5, unit);
-
-	unit = new Rook(2, 2, colors.BLACK);
-	load('models/black/rook.gltf', -1.5, -1.5, unit);
 	loadAnimation('models/black/rookAnimated.gltf', unit);
 
 	start = -3.5
 	while (start <= 3.5) {
 		unit = new Pawn(parseInt(start + 3.5), 6, colors.BLACK);
 		load('models/black/pawn.gltf', start, 2.5, unit);
+		loadAnimation('models/black/pawnAnimated.gltf', unit);
 		start++;
 	}
 
