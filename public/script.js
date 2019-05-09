@@ -99,9 +99,15 @@ function animate() {
 	if (loadingComplete) {
 		requestAnimationFrame(animate);
 		// controls.update();
-
-		mixer.update(0.1)
-
+		if(mixer) {
+			mixer.update(0.1);
+			if(mixer.time > 15) {
+				for(i = 0; i < capturedUnit.animation.scene.children.length; i++) {
+					capturedUnit.animation.scene.children[i].visible = false;
+				}
+				mixer = null;
+			}
+		}
 		// update the picking ray with the camera and mouse position
 		raycaster.setFromCamera( mouse, camera );
 
@@ -188,6 +194,7 @@ function animate() {
 				// We do not remove the mesh yet, because the move could be invalid due to check.
 				if(capturedUnit) {
 					chessPieces.splice( chessPieces.indexOf(capturedUnit), 1);
+					mixer = new THREE.AnimationMixer(capturedUnit.animation);
 				}
 				unit.setPosition(currentMove.getEndPosition()[0], currentMove.getEndPosition()[1]);
 				// Update possible moves
@@ -211,6 +218,9 @@ function animate() {
 				unit.getMesh().position.set((1 - moveClock / moveSpeed) * currentMove.getStartPosition()[0] + (moveClock / moveSpeed) * currentMove.getEndPosition()[0] - 3.5,
 					(1 - moveClock / moveSpeed) * currentMove.getStartPosition()[1] + (moveClock / moveSpeed) * currentMove.getEndPosition()[1] - 3.5, 0.5);
 				// If at the end of the animation, reset clock and set new position of unit.
+				if(moveClock == moveSpeed / 2 && capturedUnit) {
+					capturedUnit.animateUnit();
+				}
 				if(moveClock == moveSpeed) {
 					moveClock = 0;
 					currentMove = undefined;
@@ -287,19 +297,34 @@ function onWindowResize() {
 function load(url, x, y, unit) {
 	loader.load(url, function (gltf) {
 		scene.add(gltf.scene);
-		gltf.scene.children[0].scale.set(.05, .05, .05);
-		gltf.scene.children[0].rotation.x = Math.PI / 2;
-		gltf.scene.children[0].position.set(x, y, .5);
 
 		unit.setMesh(gltf.scene);
+
+		unit.getMesh().scale.set(.05, .05, .05);
+		unit.getMesh().rotation.x = Math.PI / 2;
+		unit.getMesh().position.set(x, y, .5);
+
 		if(unit.constructor.name == "Knight" && unit.color == colors.WHITE) {
 			unit.getMesh().rotation.y -= Math.PI / 2;
 		} else if(unit.constructor.name == "Knight" && unit.color == colors.BLACK) {
 			unit.getMesh().rotation.y += Math.PI / 2;
 		}
-		justMeshes.push(gltf.scene.children[0]);
+		justMeshes.push(unit.getMesh());
+
 	});
 	chessPieces.push(unit);
+}
+
+function loadAnimation(animation_url, unit) {
+	loader.load(animation_url, function (gltf) {
+		scene.add(gltf.scene);
+		var model = gltf;
+		model.scene.scale.set(.05, .05, .05);
+		model.scene.rotation.x = Math.PI / 2;
+		model.scene.position.set(unit.getPosition()[0] - 3.5  + 1, unit.getPosition()[1] - 3.5, .5);
+		// setAnimation(model);
+		unit.setAnimation(model);
+	});
 }
 
 function loadPieces() {
@@ -348,6 +373,10 @@ function loadPieces() {
 	unit = new Rook(7, 7, colors.BLACK);
 	load('models/black/rook.gltf', 3.5, 3.5, unit);
 
+	unit = new Rook(2, 2, colors.BLACK);
+	load('models/black/rook.gltf', -1.5, -1.5, unit);
+	loadAnimation('models/black/rookAnimated.gltf', unit);
+
 	start = -3.5
 	while (start <= 3.5) {
 		unit = new Pawn(parseInt(start + 3.5), 6, colors.BLACK);
@@ -356,19 +385,21 @@ function loadPieces() {
 	}
 
 	// Load animated piece
-	loader.load('models/black/rookAnimated.gltf', function (gltf) {
-		scene.add(gltf.scene);
-		console.log(gltf)
-		let model = gltf.scene;
-		model.scale.set(.05, .05, .05);
-		model.rotation.x = Math.PI / 2;
-		model.position.set(-0.5, -0.5, .5);
+	//unit = new Rook(3, 3, colors.BLACK);
+	// loader.load('models/black/rookAnimated.gltf', function (gltf) {
+	// 	scene.add(gltf.scene);
+	// 	let model = gltf.scene;
+	// 	model.scale.set(.05, .05, .05);
+	// 	model.rotation.x = Math.PI / 2;
+	// 	model.position.set(-1.5, -1.5, .5);
+	// 	justMeshes.push(gltf.scene.children[0]);
 
-		mixer = new THREE.AnimationMixer(model);
-		gltf.animations.forEach((clip) => {
-    	mixer.clipAction(clip).play();
-		});
-	});
+	// 	mixer = new THREE.AnimationMixer(model);
+	// 	gltf.animations.forEach((clip) => {
+    // 		mixer.clipAction(clip).play();
+	// 	});
+	// });
+	// chessPieces.push(unit);
 
 	for(j = 0; j < chessPieces.length; j++) {
 		chessPieces[j].getPossibleMoves();
@@ -581,4 +612,12 @@ function isCheckMate(color) {
 	}
 	console.log("Not check");
 	return false;
+}
+
+function updateMixer(gltfScene) {
+	mixer = new THREE.AnimationMixer(gltfScene);
+}
+
+function getMixer() {
+	return mixer;
 }

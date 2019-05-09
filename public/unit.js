@@ -27,6 +27,7 @@ class Unit {
         }
         this.possibleMoves = [];
         this.meshScene;
+        this.animation;        
     }
 
     getPosition() { return [this.position_x, this.position_y]; }
@@ -68,6 +69,32 @@ class Unit {
             printstring = printstring + "[" + this.possibleMoves[i] + "] ";
         }
         console.log(printstring);
+    }
+
+    setAnimation(animation) {
+        this.animation = animation;
+        console.log(this.animation);
+        for(i = 0; i < this.animation.scene.children.length; i++) {
+            this.animation.scene.children[i].visible = false;
+        }
+    }
+
+    animateUnit() {
+        if(this.animation) {
+            this.animation.scene.position.set(unit.getPosition()[0] - 3.5, unit.getPosition()[1] - 3.5, .5);
+            for(i = 0; i < this.animation.scene.children.length; i++) {
+                this.animation.scene.children[i].visible = true;
+            }
+            this.getMesh().visible = false;
+            updateMixer(this.animation.scene);
+            console.log(this.animation.scene); 
+            this.animation.animations.forEach((clip) => {
+                var ca = getMixer().clipAction(clip);
+                ca.clampWhenFinished = true;
+                ca.repetitions = 1;
+                ca.play();
+            });
+        }
     }
 }
 
