@@ -1,11 +1,18 @@
-# Animated Chess
+<h1 align="center">
+  Animated Chess
+</h1>
 
-## Get Started
-After cloning the repo, run:  
+### [👉 Full Project Description 👈](https://jessekuntz.github.io/?project=chess)
 
-`npm install`  
+## Running Things
 
-Then, you can run `npm start` in the root folder (where server.js) lives, and go to https://localhost:3000 to view the application.
+```
+npm i
+
+npm start
+```
+
+Go to https://localhost:3000 to view the application.
 
 ## Demo
 
