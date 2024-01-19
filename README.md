@@ -2,7 +2,7 @@
   Animated Chess
 </h1>
 
-### [👉 Full Project Description 👈](https://jessekuntz.github.io/?project=chess)
+### [👉 Full Project Description 👈](https://jessekuntz.github.io/chess.html)
 
 ## Running Things
 
